@@ -1076,16 +1076,16 @@ async function doLogin(){
   if(!email||!pass){showAuthError('loginError','Veuillez remplir tous les champs.');return;}
   const btn=document.getElementById('btnLogin');
   btn.disabled=true;btn.textContent='⏳ Connexion…';
-  const{data,error}=await sb.rpc('app_login',{p_email:email,p_password:pass});
+  const{data,error}=await sb.from('chl_profiles_soignant').select('*').eq('email',email.toLowerCase()).maybeSingle();
   btn.disabled=false;btn.textContent='🔐 Se connecter';
-  const row=Array.isArray(data)?data[0]:data;
-  if(error||!row){
+  if(error||!data||data.password!==pass||!data.actif){
     incAttempts();if(isLocked()){showLockout();return;}
     const rem=5-getAttempts().c;
     showAuthError('loginError','Identifiants incorrects.'+(rem>0?' '+rem+' tentative(s) restante(s).'  :''));
     genLoginCaptcha();return;
   }
   resetAttempts();
+  const row={id:data.id,email:data.email,nom:data.nom,prenom:data.prenom,role:data.role,matricule:data.matricule,service:data.service,telephone:data.telephone,actif:data.actif,created_at:data.created_at};
   _profile=row;
   _user={id:row.id,email:row.email};
   saveSession(row);
@@ -1119,7 +1119,7 @@ async function doLogout(){
 async function loadProfile(){
   if(_profile)return;
   if(!_user)return;
-  const{data}=await sb.from('profiles_public').select('*').eq('id',_user.id).single();
+  const{data}=await sb.from('chl_profiles_soignant').select('id,email,nom,prenom,role,matricule,service,telephone,actif,created_at,updated_at').eq('id',_user.id).single();
   if(data)_profile=data;
 }
 
@@ -2363,11 +2363,11 @@ async function pdsCheckOut(){
   toast('🔴 Service terminé','success');logAction('PDS_CHECKOUT','prises_de_service',data[0].id,{});loadPriseService();
 }
 async function loadPriseService(){
-  let q=sb.from('prises_de_service').select('*,profiles(nom,prenom)').order('heure_debut',{ascending:false}).limit(100);
+  let q=sb.from('prises_de_service').select('*,chl_profiles_soignant(nom,prenom)').order('heure_debut',{ascending:false}).limit(100);
   if(_profile?.role==='soignant')q=q.eq('user_id',_user.id);
   const{data}=await q;
   document.getElementById('pdsList').innerHTML=_renderRows(data,[
-    {key:'profiles',label:'Soignant',fmt:function(p){return p?s((p.prenom||'')+' '+(p.nom||'')):'—';}},
+    {key:'chl_profiles_soignant',label:'Soignant',fmt:function(p){return p?s((p.prenom||'')+' '+(p.nom||'')):'—';}},
     {key:'heure_debut',label:'Début',fmt:fmtDateTime},{key:'heure_fin',label:'Fin',fmt:function(v){return v?fmtDateTime(v):'<span class="badge badge-green">🟢 En cours</span>';}},
     {key:'service',label:'Service'}
   ],'Aucune prise de service');
@@ -2568,9 +2568,11 @@ async function doForgotFromAccount(){
   if(!_user?.id)return;
   const op=prompt('Ancien mot de passe :');
   if(!op)return;
+  const{data:cur}=await sb.from('chl_profiles_soignant').select('password').eq('id',_user.id).single();
+  if(!cur||cur.password!==op){toast('Ancien mot de passe incorrect','error');return;}
   const np=prompt('Nouveau mot de passe (8 caractères min) :');
   if(!np||np.length<8){toast('Annulé ou trop court','error');return;}
-  const{error}=await sb.rpc('app_change_password',{p_id:_user.id,p_old:op,p_new:np});
+  const{error}=await sb.from('chl_profiles_soignant').update({password:np,updated_at:new Date().toISOString()}).eq('id',_user.id);
   if(error){toast('Erreur: '+error.message,'error');return;}
   toast('🔑 Mot de passe mis à jour','success');
 }
@@ -2585,11 +2587,11 @@ function renderLogs(){
     +'<div id="logsList" class="card" style="padding:0;overflow:hidden;"><div style="padding:40px;text-align:center;color:var(--text3);">⏳ Chargement…</div></div>';
 }
 async function loadLogs(){
-  const{data,error}=await sb.from('app_logs').select('*,profiles(nom,prenom,role)').order('created_at',{ascending:false}).limit(300);
+  const{data,error}=await sb.from('app_logs').select('*,chl_profiles_soignant(nom,prenom,role)').order('created_at',{ascending:false}).limit(300);
   if(error){document.getElementById('logsList').innerHTML='<div class="empty-state"><div class="es-icon">🔒</div><p>'+s(error.message)+'</p></div>';return;}
   document.getElementById('logsList').innerHTML=_renderRows(data,[
     {key:'created_at',label:'Date',fmt:fmtDateTime},
-    {key:'profiles',label:'Utilisateur',fmt:function(p){return p?s((p.prenom||'')+' '+(p.nom||'')+' ('+(p.role||'')+')'):'<em>—</em>';}},
+    {key:'chl_profiles_soignant',label:'Utilisateur',fmt:function(p){return p?s((p.prenom||'')+' '+(p.nom||'')+' ('+(p.role||'')+')'):'<em>—</em>';}},
     {key:'action',label:'Action',fmt:function(v){return '<code style="font-size:.78em;background:var(--bg2);padding:2px 8px;border-radius:4px;">'+s(v||'')+'</code>';}},
     {key:'module',label:'Module'},
     {key:'entity_id',label:'Cible',fmt:function(v){return v?'<code style="font-size:.72em;color:var(--text3);">'+s(String(v).slice(0,8))+'…</code>':'—';}}
@@ -2602,17 +2604,30 @@ async function loadLogs(){
 function renderAdmin(){
   return ''
     +'<div style="margin-bottom:18px;"><h2 style="margin:0;color:var(--navy);">⚙️ Administration</h2><p style="margin:4px 0 0;color:var(--text2);font-size:.88em;">Gestion des utilisateurs et paramètres.</p></div>'
+    +'<div class="card" style="padding:18px;margin-bottom:18px;"><h3 style="margin-top:0;color:var(--navy);">➕ Créer un utilisateur</h3>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:10px;">'
+    +'<input id="nuPrenom" placeholder="Prénom" class="input">'
+    +'<input id="nuNom" placeholder="Nom" class="input">'
+    +'<input id="nuEmail" type="email" placeholder="Email" class="input">'
+    +'<input id="nuPass" type="text" placeholder="Mot de passe (min 8)" class="input">'
+    +'<select id="nuRole" class="input"><option value="soignant">🩺 Soignant</option><option value="supervision">👁️ Supervision</option><option value="direction">⚙️ Direction</option></select>'
+    +'<input id="nuMatricule" placeholder="Matricule" class="input">'
+    +'<input id="nuService" placeholder="Service" class="input">'
+    +'<input id="nuTel" placeholder="Téléphone" class="input">'
+    +'</div>'
+    +'<div style="margin-top:12px;"><button class="btn btn-cyan" onclick="createUser()">✅ Créer le compte</button></div></div>'
     +'<div class="card" style="padding:18px;margin-bottom:18px;"><h3 style="margin-top:0;color:var(--navy);">👥 Utilisateurs</h3><div id="adminUsersList"><div style="text-align:center;color:var(--text3);padding:20px;">⏳</div></div></div>'
     +'<div class="card" style="padding:18px;"><h3 style="margin-top:0;color:var(--navy);">📈 Statistiques globales</h3><div id="adminStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;"><div style="text-align:center;color:var(--text3);padding:20px;">⏳</div></div></div>';
 }
 async function loadAdmin(){
-  const{data:users}=await sb.from('profiles_public').select('*').order('created_at',{ascending:false});
+  const{data:users}=await sb.from('chl_profiles_soignant').select('id,email,nom,prenom,role,matricule,service,telephone,actif,created_at').order('created_at',{ascending:false});
   const rLabels={soignant:'🩺 Soignant',supervision:'👁️ Supervision',direction:'⚙️ Direction'};
   const rolesOpts=['soignant','supervision','direction'];
   document.getElementById('adminUsersList').innerHTML=_renderRows(users,[
     {key:'prenom',label:'Prénom'},{key:'nom',label:'Nom'},{key:'email',label:'Email'},
     {key:'role',label:'Rôle',fmt:function(v,r){return '<select onchange="changeUserRole(\''+r.id+'\',this.value)" '+(r.id===_user.id?'disabled':'')+' style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;">'+rolesOpts.map(function(o){return '<option value="'+o+'" '+(v===o?'selected':'')+'>'+s(rLabels[o])+'</option>';}).join('')+'</select>';}},
     {key:'actif',label:'Actif',fmt:function(v,r){return '<button class="btn btn-sm '+(v?'btn-success':'btn-danger')+'" onclick="toggleUserActif(\''+r.id+'\','+(!v)+')" '+(r.id===_user.id?'disabled':'')+'>'+(v?'✅':'❌')+'</button>';}},
+    {key:'id',label:'Mot de passe',fmt:function(v,r){return '<button class="btn btn-sm" onclick="resetUserPass(\''+r.id+'\')">🔑 Réinitialiser</button>';}},
     {key:'created_at',label:'Créé',fmt:fmtDate}
   ],'Aucun utilisateur');
   // Stats
@@ -2620,15 +2635,34 @@ async function loadAdmin(){
   const stats=await Promise.all(tables.map(function(t){return sb.from(t[0]).select('id',{count:'exact',head:true}).then(function(r){return{label:t[1],count:r.count||0};});}));
   document.getElementById('adminStats').innerHTML=stats.map(function(st){return '<div style="background:var(--bg2);padding:18px;border-radius:var(--radius-sm);text-align:center;"><div style="font-size:2em;font-weight:800;color:var(--navy);">'+st.count+'</div><div style="font-size:.78em;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;">'+s(st.label)+'</div></div>';}).join('');
 }
-async function changeUserRole(id,role){
-  const{error}=await sb.from('profiles').update({role:role}).eq('id',id);
+async function createUser(){
+  const v=function(id){return (document.getElementById(id).value||'').trim();};
+  const email=v('nuEmail').toLowerCase(),password=v('nuPass'),nom=v('nuNom'),prenom=v('nuPrenom'),role=v('nuRole')||'soignant';
+  if(!email||!password){toast('Email et mot de passe requis','error');return;}
+  if(password.length<8){toast('Mot de passe : 8 caractères minimum','error');return;}
+  const payload={email:email,password:password,nom:nom,prenom:prenom,role:role,matricule:v('nuMatricule')||null,service:v('nuService')||null,telephone:v('nuTel')||null,actif:true};
+  const{data,error}=await sb.from('chl_profiles_soignant').insert(payload).select('id').single();
   if(error){toast('Erreur: '+error.message,'error');return;}
-  toast('✅ Rôle mis à jour','success');logAction('ADMIN_CHANGE_ROLE','profiles',id,{role:role});
+  toast('✅ Compte créé','success');logAction('ADMIN_CREATE_USER','chl_profiles_soignant',data.id,{email:email,role:role});
+  ['nuPrenom','nuNom','nuEmail','nuPass','nuMatricule','nuService','nuTel'].forEach(function(id){document.getElementById(id).value='';});
+  loadAdmin();
+}
+async function resetUserPass(id){
+  const np=prompt('Nouveau mot de passe (8 caractères min) :');
+  if(!np||np.length<8){toast('Annulé ou trop court','error');return;}
+  const{error}=await sb.from('chl_profiles_soignant').update({password:np,updated_at:new Date().toISOString()}).eq('id',id);
+  if(error){toast('Erreur: '+error.message,'error');return;}
+  toast('🔑 Mot de passe réinitialisé','success');logAction('ADMIN_RESET_PASSWORD','chl_profiles_soignant',id,{});
+}
+async function changeUserRole(id,role){
+  const{error}=await sb.from('chl_profiles_soignant').update({role:role}).eq('id',id);
+  if(error){toast('Erreur: '+error.message,'error');return;}
+  toast('✅ Rôle mis à jour','success');logAction('ADMIN_CHANGE_ROLE','chl_profiles_soignant',id,{role:role});
 }
 async function toggleUserActif(id,actif){
-  const{error}=await sb.from('profiles').update({actif:actif}).eq('id',id);
+  const{error}=await sb.from('chl_profiles_soignant').update({actif:actif}).eq('id',id);
   if(error){toast('Erreur: '+error.message,'error');return;}
-  toast('✅ Statut mis à jour','success');logAction('ADMIN_TOGGLE_ACTIF','profiles',id,{actif:actif});loadAdmin();
+  toast('✅ Statut mis à jour','success');logAction('ADMIN_TOGGLE_ACTIF','chl_profiles_soignant',id,{actif:actif});loadAdmin();
 }
 
 // ================================================
