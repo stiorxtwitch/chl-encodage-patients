@@ -738,40 +738,8 @@ input[type="checkbox"],input[type="radio"]{width:17px;height:17px;accent-color:v
         <span onclick="genLoginCaptcha()" style="cursor:pointer;font-size:1.1em;color:rgba(255,255,255,.35);margin-left:4px;" title="Nouveau captcha">🔄</span>
       </div>
       <button class="btn-auth" id="btnLogin" onclick="doLogin()">🔐 Se connecter</button>
-      <div class="auth-links"><a onclick="switchAuthView('register')">Créer un compte</a> &nbsp;|&nbsp; <a onclick="switchAuthView('forgot')">Mot de passe oublié ?</a></div>
-    </div>
-
-    <!-- REGISTER -->
-    <div id="registerView" class="auth-view">
-      <div id="regError" class="auth-error">⛔ <span id="regErrorMsg"></span></div>
-      <div id="regSuccess" class="auth-success">✅ <span id="regSuccessMsg"></span></div>
-      <div style="display:flex;gap:10px;">
-        <div class="auth-field" style="flex:1;"><label>Nom</label><input type="text" id="regNom" placeholder="Dupont"></div>
-        <div class="auth-field" style="flex:1;"><label>Prénom</label><input type="text" id="regPrenom" placeholder="Jean"></div>
-      </div>
-      <div class="auth-field"><label>E-mail</label><input type="email" id="regEmail" placeholder="votre@chl.be"></div>
-      <div class="auth-field"><label>Rôle</label>
-        <select id="regRole">
-          <option value="soignant">🩺 Soignant</option>
-          <option value="supervision">👁️ Supervision</option>
-          <option value="direction">⚙️ Direction</option>
-        </select>
-      </div>
-      <div class="auth-field">
-        <label>Mot de passe</label>
-        <input type="password" id="regPass1" placeholder="Min. 8 caractères" oninput="checkRegStrength()">
-        <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
-        <div class="strength-label" id="strengthLabel" style="color:rgba(255,255,255,.3);"></div>
-      </div>
-      <div class="auth-field"><label>Confirmer MDP</label><input type="password" id="regPass2" placeholder="Répéter le mot de passe"></div>
-      <div class="auth-captcha">
-        <span class="auth-captcha-q" id="regCaptchaQ"></span>
-        <span style="color:rgba(255,255,255,.4);font-size:1.2em;">=</span>
-        <input type="number" id="regCaptchaA" placeholder="?" min="0" max="30">
-        <span onclick="genRegCaptcha()" style="cursor:pointer;font-size:1.1em;color:rgba(255,255,255,.35);margin-left:4px;">🔄</span>
-      </div>
-      <button class="btn-auth" onclick="doRegister()">📝 S'inscrire</button>
-      <div class="auth-links"><a onclick="switchAuthView('login')">← Retour à la connexion</a></div>
+      <div class="auth-links"><a onclick="switchAuthView('forgot')">Mot de passe oublié ?</a></div>
+      <div style="margin-top:14px;text-align:center;font-size:.78em;color:rgba(255,255,255,.35);">Les comptes sont créés par la Direction.</div>
     </div>
 
     <!-- FORGOT -->
@@ -1043,15 +1011,14 @@ function toast(msg,type='info'){
 // ================================================
 // CAPTCHA
 // ================================================
-let _loginCaptcha={}, _regCaptcha={};
+let _loginCaptcha={};
 function genLoginCaptcha(){const a=~~(Math.random()*10)+1,b=~~(Math.random()*10)+1;_loginCaptcha={a,b,ans:a+b};document.getElementById('loginCaptchaQ').textContent=a+' + '+b;document.getElementById('loginCaptchaA').value='';}
-function genRegCaptcha(){const a=~~(Math.random()*10)+1,b=~~(Math.random()*10)+1;_regCaptcha={a,b,ans:a+b};document.getElementById('regCaptchaQ').textContent=a+' + '+b;document.getElementById('regCaptchaA').value='';}
 
 // ================================================
 // AUTH GATE HELPERS
 // ================================================
 function switchAuthView(v){
-  ['login','register','forgot'].forEach(id=>{document.getElementById(id+'View').classList.remove('active');});
+  ['login','forgot'].forEach(id=>{const el=document.getElementById(id+'View');if(el)el.classList.remove('active');});
   document.getElementById(v+'View').classList.add('active');
   hideAuthErrors();
 }
@@ -1114,19 +1081,7 @@ async function doLogin(){
   bootApp();
 }
 
-async function doRegister(){
-  hideAuthErrors();
-  const nom=document.getElementById('regNom').value.trim(),prenom=document.getElementById('regPrenom').value.trim();
-  const email=document.getElementById('regEmail').value.trim(),role=document.getElementById('regRole').value;
-  const p1=document.getElementById('regPass1').value,p2=document.getElementById('regPass2').value;
-  if(!nom||!prenom||!email||!p1){showAuthError('regError','Remplissez tous les champs.');return;}
-  if(p1.length<8){showAuthError('regError','Le mot de passe doit contenir au moins 8 caractères.');return;}
-  if(p1!==p2){showAuthError('regError','Les mots de passe ne correspondent pas.');return;}
-  if(parseInt(document.getElementById('regCaptchaA').value)!==_regCaptcha.ans){showAuthError('regError','Captcha incorrect.');genRegCaptcha();return;}
-  const{error}=await sb.auth.signUp({email,password:p1,options:{data:{nom:s(nom),prenom:s(prenom),role},emailRedirectTo:window.location.href}});
-  if(error){showAuthError('regError',error.message);return;}
-  showAuthSuccess('regSuccess','Inscription réussie ! Vérifiez votre e-mail pour confirmer votre compte.');
-}
+// Inscription désactivée — comptes créés par la Direction (page Admin) ou directement en base.
 
 async function doForgot(){
   const email=document.getElementById('forgotEmail').value.trim();
@@ -2690,8 +2645,8 @@ document.addEventListener('DOMContentLoaded',function(){
   if(localStorage.getItem('chl_dark')==='1'){document.body.classList.add('dark-mode');const b=document.getElementById('darkToggleBtn');if(b)b.textContent='☀️';}
 
   // Init captchas
+  // Init captcha
   try{genLoginCaptcha();}catch(e){}
-  try{genRegCaptcha();}catch(e){}
 
   // Online/offline
   window.addEventListener('online',updateOnlineStatus);
