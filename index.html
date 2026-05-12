@@ -1057,6 +1057,14 @@ function checkRegStrength(){
 // ================================================
 // AUTH ACTIONS
 // ================================================
+// ================================================
+// CUSTOM AUTH (table publique profiles, sans auth.users)
+// ================================================
+const SESSION_KEY='chl_session_v1';
+function saveSession(p){try{sessionStorage.setItem(SESSION_KEY,JSON.stringify({p,ts:Date.now()}));}catch{}}
+function readSession(){try{const r=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');if(!r)return null;if(Date.now()-r.ts>60*60*1000){sessionStorage.removeItem(SESSION_KEY);return null;}return r.p;}catch{return null;}}
+function clearSession(){try{sessionStorage.removeItem(SESSION_KEY);}catch{}}
+
 async function doLogin(){
   hideAuthErrors();
   if(isLocked()){showLockout();return;}
@@ -1068,17 +1076,20 @@ async function doLogin(){
   if(!email||!pass){showAuthError('loginError','Veuillez remplir tous les champs.');return;}
   const btn=document.getElementById('btnLogin');
   btn.disabled=true;btn.textContent='⏳ Connexion…';
-  const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  const{data,error}=await sb.rpc('app_login',{p_email:email,p_password:pass});
   btn.disabled=false;btn.textContent='🔐 Se connecter';
-  if(error){
+  const row=Array.isArray(data)?data[0]:data;
+  if(error||!row){
     incAttempts();if(isLocked()){showLockout();return;}
     const rem=5-getAttempts().c;
     showAuthError('loginError','Identifiants incorrects.'+(rem>0?' '+rem+' tentative(s) restante(s).'  :''));
     genLoginCaptcha();return;
   }
-  resetAttempts();_user=data.user;
-  await loadProfile();
-  bootApp();
+  resetAttempts();
+  _profile=row;
+  _user={id:row.id,email:row.email};
+  saveSession(row);
+  await bootApp();
 }
 
 // Inscription désactivée — comptes créés par la Direction (page Admin) ou directement en base.
@@ -1086,16 +1097,15 @@ async function doLogin(){
 async function doForgot(){
   const email=document.getElementById('forgotEmail').value.trim();
   if(!email)return;
-  const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.href});
-  if(error){toast(error.message,'error');return;}
-  showAuthSuccess('forgotSuccess','Lien envoyé à '+email);
+  // Pas d'envoi mail (auth custom). Affiche un message à transmettre à la Direction.
+  showAuthSuccess('forgotSuccess','Demande enregistrée — la Direction réinitialisera le mot de passe pour '+email);
 }
 
 async function doLogout(){
   clearTimeout(_sessionTimer);clearTimeout(_sessionWarnTimer);
   stopInactivity();
-  document.getElementById('sessionBar').classList.remove('show');
-  await sb.auth.signOut();
+  const sb_=document.getElementById('sessionBar');if(sb_)sb_.classList.remove('show');
+  clearSession();
   _user=null;_profile=null;_appReady=false;_ficheId=null;_medSaved=false;
   document.getElementById('appContent').classList.remove('show');
   document.getElementById('authGate').classList.add('show');
@@ -1104,15 +1114,13 @@ async function doLogout(){
 }
 
 // ================================================
-// LOAD PROFILE
+// LOAD PROFILE — déjà chargé via app_login
 // ================================================
 async function loadProfile(){
+  if(_profile)return;
   if(!_user)return;
-  const{data}=await sb.from('profiles').select('*').eq('id',_user.id).single();
+  const{data}=await sb.from('profiles_public').select('*').eq('id',_user.id).single();
   if(data)_profile=data;
-  else{
-    _profile={id:_user.id,nom:_user.user_metadata?.nom||'',prenom:_user.user_metadata?.prenom||'',role:_user.user_metadata?.role||'soignant',email:_user.email};
-  }
 }
 
 // ================================================
@@ -2557,11 +2565,14 @@ function renderCompte(){
     +'</div>';
 }
 async function doForgotFromAccount(){
-  if(!_user?.email)return;
-  if(!confirm('Envoyer un email de réinitialisation à '+_user.email+' ?'))return;
-  const{error}=await sb.auth.resetPasswordForEmail(_user.email);
+  if(!_user?.id)return;
+  const op=prompt('Ancien mot de passe :');
+  if(!op)return;
+  const np=prompt('Nouveau mot de passe (8 caractères min) :');
+  if(!np||np.length<8){toast('Annulé ou trop court','error');return;}
+  const{error}=await sb.rpc('app_change_password',{p_id:_user.id,p_old:op,p_new:np});
   if(error){toast('Erreur: '+error.message,'error');return;}
-  toast('📧 Email envoyé','success');
+  toast('🔑 Mot de passe mis à jour','success');
 }
 
 // ================================================
@@ -2595,7 +2606,7 @@ function renderAdmin(){
     +'<div class="card" style="padding:18px;"><h3 style="margin-top:0;color:var(--navy);">📈 Statistiques globales</h3><div id="adminStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;"><div style="text-align:center;color:var(--text3);padding:20px;">⏳</div></div></div>';
 }
 async function loadAdmin(){
-  const{data:users}=await sb.from('profiles').select('*').order('created_at',{ascending:false});
+  const{data:users}=await sb.from('profiles_public').select('*').order('created_at',{ascending:false});
   const rLabels={soignant:'🩺 Soignant',supervision:'👁️ Supervision',direction:'⚙️ Direction'};
   const rolesOpts=['soignant','supervision','direction'];
   document.getElementById('adminUsersList').innerHTML=_renderRows(users,[
@@ -2652,35 +2663,18 @@ document.addEventListener('DOMContentLoaded',function(){
   window.addEventListener('online',updateOnlineStatus);
   window.addEventListener('offline',updateOnlineStatus);
 
-  // Check existing session
-  sb.auth.getSession().then(async function(res){
-    const session=res.data?.session;
-    if(session&&session.user){
-      _user=session.user;
-      await loadProfile();
-      if(_profile&&_profile.actif!==false){
-        await bootApp();
-      }else{
-        toast('Compte désactivé. Contactez la Direction.','error');
-        await sb.auth.signOut();
-      }
+  // Restore custom session (sessionStorage)
+  (async function(){
+    const p=readSession();
+    if(p&&p.actif!==false){
+      _profile=p;
+      _user={id:p.id,email:p.email};
+      await bootApp();
     }else{
-      // Show auth gate
       const gate=document.getElementById('authGate');
       if(gate)gate.classList.add('show');
     }
-  });
-
-  // Listen for auth changes
-  sb.auth.onAuthStateChange(function(event,session){
-    if(event==='SIGNED_OUT'){
-      _user=null;_profile=null;_appReady=false;
-      stopInactivity();
-      clearTimeout(_sessionTimer);clearTimeout(_sessionWarnTimer);
-      document.getElementById('appContent').classList.remove('show');
-      document.getElementById('authGate').classList.add('show');
-    }
-  });
+  })();
 });
 
 </script>
