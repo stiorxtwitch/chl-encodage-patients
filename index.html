@@ -1283,52 +1283,6 @@ function renderFichesList(){
   <div id="fichesListContainer"></div>`;
 }
 
-let _fichesCache=[];
-async function loadFichesList(){
-  const container=document.getElementById('fichesListContainer');if(!container)return;
-  container.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">⏳ Chargement…</div>';
-  let q=sb.from('chlencodage_fiches_patients').select('*,chlencodage_fiches_medicales(id)');
-  if(_profile?.role==='soignant')q=q.eq('user_id',_user.id);
-  const statutF=document.getElementById('ficheStatutFilter')?.value;
-  if(statutF)q=q.eq('statut',statutF);
-  q=q.order('created_at',{ascending:false}).limit(100);
-  const{data,error}=await q;
-  if(error){container.innerHTML='<div class="empty-state"><div class="es-icon">❌</div><h3>Erreur: '+s(error.message)+'</h3></div>';return;}
-  _fichesCache=data||[];
-  renderFichesListHTML(_fichesCache);
-}
-
-function filterFiches(q){
-  if(!q.trim()){renderFichesListHTML(_fichesCache);return;}
-  const ql=q.toLowerCase();
-  renderFichesListHTML(_fichesCache.filter(f=>(f.patient_nom||'').toLowerCase().includes(ql)||(f.patient_prenom||'').toLowerCase().includes(ql)||(f.numero_patient||'').toLowerCase().includes(ql)));
-}
-
-function renderFichesListHTML(fiches){
-  const container=document.getElementById('fichesListContainer');if(!container)return;
-  const canValidate=_profile?.role==='supervision'||_profile?.role==='direction';
-  const stMap={brouillon:'status-brouillon',soumis:'status-soumis',valide:'status-valide',refuse:'status-refuse'};
-  const urg={U1:'badge-red',U2:'badge-orange',U3:'badge-green',implique:'badge-blue'};
-  if(!fiches.length){container.innerHTML='<div class="empty-state"><div class="es-icon">📋</div><h3>Aucune fiche trouvée</h3><p>Créez votre première fiche patient.</p></div>';return;}
-  container.innerHTML=fiches.map(f=>`
-    <div class="fiche-item border-${f.statut}">
-      <div class="fiche-info">
-        <strong>${s(f.patient_nom||'?')} ${s(f.patient_prenom||'')}</strong>
-        ${f.urgence?`<span class="badge ${urg[f.urgence]||'badge-blue'}" style="margin-left:8px;">${f.urgence}</span>`:''}
-        ${f.chlencodage_fiches_medicales?.length?'<span class="badge badge-blue" style="margin-left:4px;">🏥 Méd.</span>':''}
-        <div class="fiche-meta">N°Pat: ${s(f.numero_patient||'—')} | ${fmtDate(f.in_date)} | ${fmtDateTime(f.created_at)}</div>
-        ${f.supervisor_comment?`<div class="fiche-meta" style="color:var(--warning);">💬 ${s(f.supervisor_comment)}</div>`:''}
-        ${f.rejection_reason?`<div class="fiche-meta" style="color:var(--danger);">❌ ${s(f.rejection_reason)}</div>`:''}
-      </div>
-      <div class="fiche-btns">
-        <span class="status-badge ${stMap[f.statut]||''}">${f.statut}</span>
-        <button class="btn btn-sm btn-outline" onclick="viewFiche('${f.id}')">👁️ Voir</button>
-        ${f.statut==='brouillon'?`<button class="btn btn-sm btn-cyan" onclick="submitFiche('${f.id}')">📤 Soumettre</button>`:''}
-        ${canValidate&&f.statut==='soumis'?`<button class="btn btn-sm btn-success" onclick="openValidation('${f.id}','valide')">✅ Valider</button><button class="btn btn-sm btn-danger" onclick="openValidation('${f.id}','refuse')">❌ Refuser</button>`:''}
-        ${_profile?.role==='direction'?`<button class="btn btn-sm btn-danger" onclick="openDelete('${f.id}','${s(f.patient_nom||'?')} ${s(f.patient_prenom||'')}',deleteFicheById)">🗑️</button>`:''}
-      </div>
-    </div>`).join('');
-}
 
 async function submitFiche(id){
   const{error}=await sb.from('chlencodage_fiches_patients').update({statut:'soumis'}).eq('id',id);
