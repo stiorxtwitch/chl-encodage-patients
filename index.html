@@ -468,7 +468,7 @@ const sb=supabase.createClient(SB_URL,SB_ANON);
 let _user=null,_profile=null,_appReady=false;
 let _sessionTimer=null,_sessionWarnTimer=null;
 let _inactTimer=null,_inactWarnTimer=null,_inactBarInterval=null,_inactWarnInterval=null,_inactOverlayShown=false,_inactStart=null;
-const INACT_MS=5*60*1000,INACT_WARN_MS=30*1000,SESS_MS=60*60*1000,SESS_WARN_MS=5*60*1000;
+const INACT_MS=30*60*1000,INACT_WARN_MS=30*1000,SESS_MS=60*60*1000,SESS_WARN_MS=5*60*1000;
 let _ficheId=null,_medSaved=false,_ficheViewId=null;
 let _bodyData={},_bodyDataMed={},_activeLesion='Fracture',_activeLesionMed='Fracture';
 let _ynValues={},_evoColCount=0,_matValues={},_bilanBuilt=false,_matBuilt=false,_soignantCount=0;
