@@ -28,7 +28,6 @@ body.dark-mode{--bg:#0f172a;--bg2:#1e293b;--bg3:#334155;--card:#1e293b;--text:#f
 .table th,.table td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--border)}
 .table th{background:var(--navy);color:#fff;font-weight:600;font-size:.78em;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
 .table tr:last-child td{border-bottom:none}.table tr:hover td{background:var(--bg)}
-
 /* LOADING */
 #loadingScreen{position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,var(--navy-dark) 0%,var(--navy) 60%,#1a3a6b 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px}
 .loader-logo{animation:logoPulse 2s ease infinite}
@@ -43,7 +42,6 @@ body.dark-mode{--bg:#0f172a;--bg2:#1e293b;--bg3:#334155;--card:#1e293b;--text:#f
 @keyframes statusBlink{0%,100%{opacity:.5}50%{opacity:1}}
 .loader-dots::after{content:'...';animation:dots 1.5s steps(4,end) infinite}
 @keyframes dots{0%,20%{content:'.'}40%{content:'..'}60%,100%{content:'...'}}
-
 /* AUTH */
 #authGate{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,var(--navy-dark),var(--navy),#1a3a6b);display:none;align-items:center;justify-content:center;padding:16px}
 #authGate.show{display:flex}
@@ -67,8 +65,7 @@ body.dark-mode{--bg:#0f172a;--bg2:#1e293b;--bg3:#334155;--card:#1e293b;--text:#f
 .auth-error{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);border-radius:var(--radius-sm);padding:10px 14px;font-size:.85em;color:#fca5a5;margin-bottom:12px;display:none;gap:8px;font-weight:600;align-items:center}.auth-error.show{display:flex}
 .auth-success{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);border-radius:var(--radius-sm);padding:10px 14px;font-size:.85em;color:#6ee7b7;margin-bottom:12px;display:none;gap:8px;font-weight:600;align-items:center}.auth-success.show{display:flex}
 .lockout-bar{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:var(--radius-sm);padding:9px 14px;font-size:.8em;color:#fca5a5;margin-bottom:12px;text-align:center;display:none;font-family:var(--mono);font-weight:700}.lockout-bar.show{display:block}
-
-/* APP PANEL & SIDEBAR */
+/* APP */
 #appContent{display:none;min-height:100vh}#appContent.show{display:flex}
 .sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);height:100vh;position:sticky;top:0;background:linear-gradient(180deg,var(--navy-dark),var(--navy));display:flex;flex-direction:column;overflow:hidden;box-shadow:4px 0 20px rgba(13,26,58,.3);z-index:50;transition:width .3s}
 .sidebar.collapsed{width:64px;min-width:64px}
@@ -90,7 +87,6 @@ body.dark-mode{--bg:#0f172a;--bg2:#1e293b;--bg3:#334155;--card:#1e293b;--text:#f
 .sidebar.collapsed .user-info{display:none}
 .role-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.65em;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
 .role-soignant{background:rgba(0,194,212,.2);color:var(--cyan)}.role-supervision{background:rgba(245,158,11,.2);color:#fbbf24}.role-direction{background:rgba(239,68,68,.2);color:#f87171}
-
 .main-area{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
 .topbar{background:var(--card);border-bottom:1px solid var(--border);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px var(--shadow);position:sticky;top:0;z-index:40;flex-shrink:0}
 .topbar-left{display:flex;align-items:center;gap:14px}.topbar-right{display:flex;align-items:center;gap:10px}
@@ -106,1002 +102,304 @@ body.dark-mode{--bg:#0f172a;--bg2:#1e293b;--bg3:#334155;--card:#1e293b;--text:#f
 .inactivity-statusbar{background:linear-gradient(90deg,#1e293b,#2a1a00);border-bottom:1px solid rgba(245,158,11,.2);padding:5px 28px;font-size:.74em;color:rgba(245,158,11,.7);font-family:var(--mono);display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-shrink:0}
 .inact-val{color:#f59e0b;font-weight:700}
 .content-area{flex:1;overflow-y:auto;padding:28px}
-
-/* INACTIVITY SYSTEM */
-#inactivityOverlay{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(8px)}
-#inactivityOverlay.show{display:flex}
-.inact-box{background:var(--navy-dark);border:2px solid #f59e0b;border-radius:20px;padding:40px;width:100%;max-width:400px;text-align:center}
-.inact-countdown{font-size:2.5em;font-weight:700;font-family:var(--mono);color:#f59e0b;margin-bottom:24px;background:rgba(245,158,11,.1);border-radius:12px;padding:12px 0}
-.btn-stay{background:#f59e0b;color:#1a1a1a;border:none;border-radius:var(--radius-sm);padding:12px 28px;font-size:1em;font-weight:700;cursor:pointer;margin-right:10px}
-.btn-logout-now{background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.15);border-radius:var(--radius-sm);padding:12px 20px;font-size:.9em;cursor:pointer}
-
-/* STATS */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px;margin-bottom:28px}
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;display:flex;align-items:flex-start;gap:16px;box-shadow:0 2px 8px var(--shadow);transition:box-shadow .2s,transform .2s}
-.stat-card:hover{box-shadow:0 6px 20px var(--shadow);transform:translateY(-2px)}
-.stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4em;flex-shrink:0}
-.stat-info h3{font-size:1.9em;font-weight:800;line-height:1;margin-bottom:4px}.stat-info p{font-size:.8em;color:var(--text2);font-weight:500}.stat-info .stat-sub{font-size:.72em;color:var(--text3);margin-top:4px}
-.si-blue{background:rgba(26,47,107,.1);color:var(--navy)}.si-cyan{background:rgba(0,194,212,.1);color:var(--cyan-dark)}.si-green{background:rgba(16,185,129,.1);color:var(--success)}.si-orange{background:rgba(245,158,11,.1);color:var(--warning)}.si-red{background:rgba(239,68,68,.1);color:var(--danger)}.si-purple{background:rgba(124,58,237,.1);color:var(--purple)}
-
-/* FORMS & LAYOUTS */
-.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
-.page-header h2{font-size:1.3em;font-weight:700;color:var(--text)}.page-header p{font-size:.85em;color:var(--text2);margin-top:3px}
-.section-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;box-shadow:0 2px 8px var(--shadow);overflow:hidden}
-.section-head{background:var(--navy);color:#fff;padding:12px 18px;font-weight:700;font-size:.88em;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;transition:background .2s}
-.section-head:hover{background:var(--navy-mid)}.section-head .chev{transition:transform .25s;font-size:.75em}.section-head.collapsed .chev{transform:rotate(-90deg)}
-.section-body{padding:18px}.section-body.hidden{display:none}
-.form-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end}
-.form-group{flex:1;min-width:180px}.form-group.sm{min-width:120px;flex:.6}.form-group.xs{min-width:90px;flex:.4}
-.form-group label{display:block;margin-bottom:5px;font-weight:600;font-size:.78em;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
-.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--input-bg);color:var(--text);font-size:.9em;font-family:var(--font);transition:border-color .2s,box-shadow .2s}
-.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,47,107,.1)}
-.form-group textarea{resize:vertical;min-height:72px}
-.radio-group,.check-group{display:flex;gap:14px;flex-wrap:wrap;align-items:center;padding:5px 0}
-.radio-group label,.check-group label{display:flex;align-items:center;gap:6px;font-weight:500;cursor:pointer;font-size:.9em}
-input[type="checkbox"],input[type="radio"]{width:17px;height:17px;accent-color:var(--navy);cursor:pointer}
-
-/* BUTTONS */
-.btn{padding:10px 22px;border:none;border-radius:var(--radius-sm);cursor:pointer;font-weight:700;font-size:.88em;transition:all .2s;font-family:var(--font);display:inline-flex;align-items:center;gap:7px}
-.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy-mid);transform:translateY(-1px);box-shadow:0 4px 14px rgba(26,47,107,.3)}.btn-primary:disabled{background:#aaa;cursor:not-allowed}
-.btn-cyan{background:var(--cyan);color:var(--navy-dark)}.btn-cyan:hover{background:var(--cyan-dark);transform:translateY(-1px)}
-.btn-success{background:var(--success);color:#fff}.btn-danger{background:var(--danger);color:#fff}.btn-warning{background:var(--warning);color:#fff}
-.btn-outline{background:transparent;color:var(--navy);border:1.5px solid var(--navy)}.btn-outline:hover{background:var(--navy);color:#fff}
-.btn-sm{padding:6px 14px;font-size:.8em}.btn-lg{padding:13px 28px;font-size:1em}
-.btn-ghost{background:var(--bg);color:var(--text2);border:1px solid var(--border)}.btn-ghost:hover{background:var(--bg2)}
-.actions-bar{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:28px 0 8px}
-
-/* TABLES & BADGES */
-.table-wrapper{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);box-shadow:0 2px 8px var(--shadow)}
-.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.72em;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
-.badge-blue{background:rgba(26,47,107,.1);color:var(--navy)}.badge-cyan{background:rgba(0,194,212,.1);color:var(--cyan-dark)}.badge-green{background:rgba(16,185,129,.1);color:var(--success)}.badge-orange{background:rgba(245,158,11,.1);color:var(--warning)}.badge-red{background:rgba(239,68,68,.1);color:var(--danger)}.badge-purple{background:rgba(124,58,237,.1);color:var(--purple)}
-
-/* MODALS - ENRICHIES ET OPTIMISÉES AVEC LES TABS */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(5px);animation:fadeIn .2s ease}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.modal-box{background:var(--card);border-radius:18px;width:100%;max-width:850px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.3);border:1px solid var(--border);animation:slideUp .25s ease}
-@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
-.modal-head{background:var(--navy);color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;border-radius:18px 18px 0 0;position:sticky;top:0;z-index:10}
-.modal-head h2{font-size:1em;font-weight:700}
-.modal-close{background:rgba(255,255,255,.2);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.2em;display:flex;align-items:center;justify-content:center;transition:background .2s}
-.modal-close:hover{background:rgba(255,255,255,.4)}
-.modal-body{padding:24px}.modal-section{margin-bottom:20px}
-.modal-section-title{font-weight:700;font-size:.78em;text-transform:uppercase;letter-spacing:.6px;color:var(--navy);margin-bottom:10px;padding-bottom:7px;border-bottom:2px solid var(--bg2)}
-.modal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
-.modal-field{background:var(--bg);border-radius:var(--radius-sm);padding:9px 13px}
-.modal-field .lbl{font-size:.7em;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
-.modal-field .val{font-size:.88em;font-weight:600;color:var(--text)}
-
-/* STYLE DES ONGLETS DE LA MODAL PATIENT */
-.modal-tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 16px;gap:8px}
-.modal-tab-btn{background:none;border:none;padding:14px 20px;font-family:var(--font);font-size:0.9em;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:3px solid transparent;transition:all 0.2s}
-.modal-tab-btn:hover{color:var(--navy)}
-.modal-tab-btn.active{color:var(--navy);border-bottom-color:var(--navy)}
-.tab-content{display:none;padding:24px}
-.tab-content.active{display:block}
-
-/* DESIGN AVANCÉ POUR L'HISTORIQUE DES FICHES CLINIQUES */
-.medical-records-list{display:flex;flex-direction:column;gap:16px;margin-top:10px}
-.medical-record-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:18px;transition:transform .2s,box-shadow .2s;position:relative}
-.medical-record-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px var(--shadow);border-color:var(--navy-mid)}
-.record-header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:14px}
-.record-date{font-family:var(--mono);font-size:0.88em;font-weight:600;color:var(--navy)}
-.record-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
-
-/* EXTRAS FORMULAIRES */
-.urgence-group{display:flex;gap:8px;flex-wrap:wrap}
-.urgence-pill{display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:20px;cursor:pointer;font-weight:700;font-size:.84em;border:2px solid transparent;transition:all .15s}
-.urgence-pill input{display:none}
-.u1{background:#fef2f2;color:#dc2626;border-color:#fca5a5}.u1.checked{background:#ef4444;color:#fff}
-.u2{background:#fffbeb;color:#d97706;border-color:#fcd34d}.u2.checked{background:#f59e0b;color:#fff}
-.u3{background:#f0fdf4;color:#16a34a;border-color:#86efac}.u3.checked{background:#22c55e;color:#fff}
-.u4{background:#eff6ff;color:#2563eb;border-color:#93c5fd}.u4.checked{background:#3b82f6;color:#fff}
-
-/* SCHEMA ANATOMIQUE */
-.body-schema-wrapper{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin-top:12px}
-.bsvg-container{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:8px}
-.bsvg-container svg{max-width:200px;width:100%;cursor:pointer}
-.body-legend{flex:1;min-width:200px}
-.body-legend h4{font-size:.78em;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
-.lesion-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-.lesion-chip{padding:4px 11px;border-radius:20px;font-size:.76em;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--bg);color:var(--text2);transition:all .15s}
-.lesion-chip.selected{box-shadow:0 2px 8px rgba(0,0,0,.15)}
-.zone-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:.76em;font-weight:600;margin:3px;color:#fff}
-.zone-badge button{background:none;border:none;color:#fff;cursor:pointer;font-size:.9em;padding:0 2px;opacity:.8}
-.autre-lesion-box{display:none;margin-top:10px}.autre-lesion-box.visible{display:block}
-.autre-lesion-box label{font-size:.76em;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px}
-.autre-lesion-box input{width:100%;padding:8px 11px;border:1.5px solid #3b82f6;border-radius:var(--radius-sm);background:var(--input-bg);color:var(--text);font-size:.9em}
-
-/* TABLES SECONDAIRES */
-.mat-table{width:100%;border-collapse:collapse}
-.mat-table td{padding:6px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
-.mat-table td:first-child{font-size:.86em;font-weight:500}.mat-table td:last-child{width:130px}
-.qty-control{display:flex;align-items:center;gap:7px}
-.qty-btn{width:30px;height:30px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);border-radius:var(--radius-sm);cursor:pointer;font-size:1.1em;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.qty-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
-.qty-val{min-width:32px;text-align:center;font-weight:700;font-family:var(--mono);font-size:.92em}.qty-val.nonzero{color:var(--navy)}
-
-.bilan-table{width:100%;border-collapse:collapse;font-size:.76em}
-.bilan-table th,.bilan-table td{border:1px solid var(--border);padding:6px 4px;text-align:center;white-space:nowrap}
-.bilan-table th{background:var(--navy);color:#fff;font-weight:600;font-size:.78em}
-.bilan-table td:first-child{background:var(--bg2);font-weight:600;text-align:left;padding-left:10px;font-size:.83em}
-.bilan-table td.cell-checked{background:rgba(26,47,107,.08)}
-
-/* SCORE GLASGOW */
-.glasgow-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-.glasgow-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
-.glasgow-card h4{font-size:.78em;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--bg2)}
-.glasgow-option{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-radius:var(--radius-sm);cursor:pointer;transition:background .15s}
-.glasgow-option:hover{background:var(--bg2)}.glasgow-option label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.87em;flex:1}
-.score-badge{background:var(--navy);color:#fff;padding:2px 8px;border-radius:10px;font-size:.74em;font-weight:700;font-family:var(--mono)}
-.glasgow-total{background:linear-gradient(135deg,var(--navy-dark),var(--navy));color:#fff;padding:14px 20px;border-radius:var(--radius);text-align:center;margin-top:14px}
-.glasgow-total .score-num{font-size:2.6em;font-weight:800;font-family:var(--mono)}.glasgow-total .score-label{font-size:.82em;opacity:.8}
-
-.yn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:12px}
-.yn-item{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 13px;display:flex;align-items:center;justify-content:space-between}
-.yn-label{font-size:.87em;font-weight:600}.yn-btns{display:flex;gap:6px}
-.yn-btn{padding:3px 11px;border:1.5px solid var(--border);border-radius:14px;cursor:pointer;font-size:.76em;font-weight:700;background:var(--bg2);color:var(--text2);transition:all .15s;font-family:var(--font)}
-.yn-btn.yes.active{background:var(--success);color:#fff;border-color:var(--success)}.yn-btn.no.active{background:var(--danger);color:#fff;border-color:var(--danger)}
-
-/* TOAST CONTEXTUEL */
-.toast-container{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:10px;z-index:99999}
-.toast{padding:14px 24px;border-radius:var(--radius-sm);color:#fff;font-size:.9em;font-weight:700;box-shadow:0 8px 30px rgba(0,0,0,.25);display:flex;align-items:center;gap:10px;animation:toastIn .3s cubic-bezier(0.175,0.885,0.32,1.275) forwards}
-@keyframes toastIn{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
-.t-success{background:linear-gradient(135deg,#059669,var(--success))}.t-error{background:linear-gradient(135deg,#dc2626,var(--danger))}.t-warning{background:linear-gradient(135deg,#d97706,var(--warning))}
 </style>
 </head>
 <body>
 
 <div id="loadingScreen">
   <div class="loader-logo">
-    <svg width="74" height="74" viewBox="0 0 64 64" fill="none">
-      <circle cx="32" cy="32" r="30" stroke="#00c2d4" stroke-width="4" stroke-dasharray="6 6"/>
-      <path d="M16 32h8l4-12 5 24 3-17 2 5h8" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+      <circle cx="32" cy="32" r="30" stroke="#00c2d4" stroke-width="4" stroke-dasharray="10 5"/>
+      <path d="M16 32H24L28 16L36 48L40 32H48" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   </div>
   <div>
-    <div class="loader-title">CHL CENTRE HOSPITALIER DE LIÈGE</div>
-    <div class="loader-sub">Système Intégré d'Encodage Clinique</div>
+    <h1 class="loader-title">CHL — Centre Hospitalier de Liège</h1>
+    <p class="loader-sub">Système d'Encodage Patients</p>
   </div>
-  <div class="ecg-wrapper">
-    <svg class="ecg-line" viewBox="0 0 200 50" fill="none">
-      <path d="M0 25h20l5-15 6 30 4-20 3 5h42l5-15 6 30 4-20 3 5h42l5-15 6 30 4-20 3 5h20" stroke="rgba(0,194,212,0.3)" stroke-width="2"/>
-    </svg>
+  <div class="loader-progress-bar">
+    <div class="loader-progress-fill"></div>
   </div>
-  <div class="loader-progress-bar"><div class="loader-progress-fill"></div></div>
-  <div class="loader-status">Initialisation des modules sécurisés<span class="loader-dots"></span></div>
+  <p class="loader-status">Initialisation des modules sécurisés<span class="loader-dots"></span></p>
 </div>
+
 <div id="authGate">
   <div class="auth-box">
     <div class="auth-brand">
       <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
-        <path d="M32 4v56M4 32h56" stroke="#00c2d4" stroke-width="5" stroke-linecap="round"/>
-        <circle cx="32" cy="32" r="14" fill="#1a2f6b" stroke="#ffffff" stroke-width="3"/>
+        <path d="M16 32H24L28 16L36 48L40 32H48" stroke="#00c2d4" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <h1>CHL — CONNEXION SECURISEE</h1>
-      <p>Accès Restreint Personnel Médical</p>
+      <h1>CHL — ENCODAGE</h1>
+      <p>Portail Sécurisé Personnel</p>
     </div>
 
-    <div class="auth-badge">Statut Terminal : <span id="authBadgeNet">VÉRIFICATION...</span></div>
-    <div class="lockout-bar" id="lockoutBar">BLOCAGE TEMPORAIRE : <span id="lockoutTimer">00s</span></div>
+    <div class="auth-badge">Statut Serveur : <span id="authServerStatus">Vérification...</span></div>
 
-    <div class="auth-error" id="authErrorBar">⚠️ <span id="authErrorTxt"></span></div>
-    <div class="auth-success" id="authSuccessBar">✓ <span id="authSuccessTxt"></span></div>
+    <div class="lockout-bar" id="lockoutBar">🔒 Verrouillage temporaire actif.</div>
+    <div class="auth-error" id="authError">❌ Identifiants invalides.</div>
+    <div class="auth-success" id="authSuccess">✅ Connexion réussie.</div>
 
     <div id="viewLogin" class="auth-view active">
       <div class="auth-field">
-        <label>Identifiant Professionnel (Email)</label>
-        <input type="email" id="loginEmail" placeholder="nom.prenom@chl.be" autocomplete="username">
+        <label>Adresse Email Pro</label>
+        <input type="email" id="loginEmail" placeholder="nom@chl.be" autocomplete="username">
       </div>
       <div class="auth-field">
         <label>Mot de passe</label>
         <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
       </div>
       <div class="auth-captcha">
-        <div class="auth-captcha-q" id="loginCaptchaQ">0 + 0 =</div>
-        <input type="text" id="loginCaptchaA" placeholder="Score">
+        <span class="auth-captcha-q" id="loginCaptchaQ">0 + 0 = ?</span>
+        <input type="text" id="loginCaptchaA" placeholder="A">
       </div>
-      <button class="btn-auth" id="btnLoginSubmit" onclick="doLogin()">AUTHENTIFICATION</button>
-      <div class="auth-links">Pas encore enregistré ? <a onclick="gotoAuthView('Register')">Créer un compte</a></div>
+      <button class="btn-auth" id="btnLogin" onclick="doLogin()">Se Connecter</button>
+      <div class="auth-links">Nouveau collaborateur ? <a onclick="switchAuthView('Register')">Créer un compte</a></div>
     </div>
 
     <div id="viewRegister" class="auth-view">
       <div class="auth-field">
         <label>Nom Complet</label>
-        <input type="text" id="regName" placeholder="Dr. Dupont Jean">
+        <input type="text" id="regName" placeholder="Dr. Jean Dupont">
       </div>
       <div class="auth-field">
-        <label>Email Professionnel</label>
-        <input type="email" id="regEmail" placeholder="jean.dupont@chl.be">
+        <label>Adresse Email Pro</label>
+        <input type="email" id="regEmail" placeholder="nom@chl.be">
       </div>
       <div class="auth-field">
-        <label>Mot de passe principal</label>
-        <input type="password" id="regPass" placeholder="Minimum 6 caractères">
+        <label>Mot de passe (Min 6 car.)</label>
+        <input type="password" id="regPass" placeholder="••••••••">
       </div>
-      <button class="btn-auth" onclick="doRegister()">SOUMETTRE LA DEMANDE</button>
-      <div class="auth-links">Déjà inscrit ? <a onclick="gotoAuthView('Login')">Se connecter</a></div>
+      <div class="auth-field">
+        <label>Rôle Souhaité</label>
+        <select id="regRole" style="width:100%;padding:12px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.12);border-radius:7px;color:#fff;font-family:inherit;">
+          <option value="soignant" style="color:#000">Personnel Soignant (Lecture/Écriture)</option>
+          <option value="supervision" style="color:#000">Supervision / Bureau de Coordination (Validation)</option>
+          <option value="direction" style="color:#000">Direction Médicale (Admin complet)</option>
+        </select>
+      </div>
+      <div class="auth-captcha">
+        <span class="auth-captcha-q" id="regCaptchaQ">0 + 0 = ?</span>
+        <input type="text" id="regCaptchaA" placeholder="A">
+      </div>
+      <button class="btn-auth" id="btnRegister" onclick="doRegister()">Demander l'accès</button>
+      <div class="auth-links">Déjà inscrit ? <a onclick="switchAuthView('Login')">Se connecter</a></div>
     </div>
   </div>
 </div>
 
 <div id="appContent">
-  <div class="sidebar" id="mainSidebar">
-    <div class="sidebar-brand">
-      <svg width="28" height="28" viewBox="0 0 64 64" fill="none" style="flex-shrink:0;">
-        <path d="M32 6v52M6 32h52" stroke="#00c2d4" stroke-width="6" stroke-linecap="round"/>
-      </svg>
-      <div class="sidebar-brand-text">
-        <h2>URGENCES — CHL</h2>
-        <p>Liège Hospital Network</p>
-      </div>
-    </div>
-    <div class="sidebar-nav">
-      <div class="nav-section-label"> CLINIQUE</div>
-      <div class="nav-item active" onclick="switchNav(this,'pageFiche')">
-        <div class="nav-icon">🩺</div><div class="nav-label">Nouvelle Fiche Médicale</div>
-      </div>
-      <div class="nav-item" onclick="switchNav(this,'pageList')">
-        <div class="nav-icon">📋</div><div class="nav-label">Base Patients</div>
-      </div>
-      <div class="nav-divider"></div>
-      <div class="nav-section-label" id="lblAdminSec" style="display:none;"> SUPERVISION</div>
-      <div class="nav-item" id="btnNavAdmin" style="display:none;" onclick="switchNav(this,'pageAdmin')">
-        <div class="nav-icon">🛡️</div><div class="nav-label">Gestion Droits</div>
-      </div>
-    </div>
-    <div class="sidebar-user">
-      <div class="user-avatar" id="usrAv">U</div>
-      <div class="user-info">
-        <div class="user-name" id="usrName">Utilisateur</div>
-        <div id="usrRole">Chargement...</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="main-area">
-    <div class="topbar">
-      <div class="topbar-left">
-        <button class="topbar-btn" onclick="toggleSidebar()">☰</button>
-        <div>
-          <div class="page-title" id="topbarTitle">Nouvelle Fiche Médicale</div>
-          <div class="page-breadcrumb">CHL / Clinique / Encodage</div>
-        </div>
-      </div>
-      <div class="topbar-right">
-        <div class="online-badge" id="netBadge"><div class="online-dot"></div><span>ONLINE</span></div>
-        <button class="topbar-btn" onclick="toggleDarkMode()">🌓</button>
-        <button class="topbar-btn" style="color:var(--danger); border-color:rgba(239,68,68,0.2);" onclick="doLogout()">Déconnexion</button>
-      </div>
-    </div>
-
-    <div class="session-bar" id="sessionAlertBar">
-      ⚠️ Session expirée suite à une coupure ou un changement de jeton. 
-      <button onclick="window.location.reload()">Reconnexion Immédiate</button>
-    </div>
-    <div class="inactivity-statusbar">
-      Activité : <span class="inact-val" id="inactStatusTxt">00:00</span> / 15:00
-    </div>
-
-    <div class="content-area">
-      <div id="pageFiche" class="app-page" style="display:block;">
-        <div class="page-header">
-          <div>
-            <h2>Dossier Clinique d'Urgence</h2>
-            <p>Saisie des données patients, constantes vitales et administration logistique.</p>
-          </div>
-        </div>
-
-        <div class="section-card">
-          <div class="section-head" onclick="toggleSection(this)">
-            <span>👥 Identification & Etat Civil du Patient</span><span class="chev">▼</span>
-          </div>
-          <div class="section-body">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Nom du Patient *</label>
-                <input type="text" id="fNom" required placeholder="Ex: Lambert">
-              </div>
-              <div class="form-group">
-                <label>Prénom *</label>
-                <input type="text" id="fPrenom" required placeholder="Ex: Michel">
-              </div>
-              <div class="form-group sm">
-                <label>Sexe</label>
-                <select id="fSexe">
-                  <option value="M">Masculin (M)</option>
-                  <option value="F">Féminin (F)</option>
-                  <option value="X">Autre (X)</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Date de Naissance</label>
-                <input type="date" id="fDna">
-              </div>
-              <div class="form-group">
-                <label>NISS / Immatriculation Sociale</label>
-                <input type="text" id="fNiss" placeholder="Ex: 85.05.12-123.45">
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="section-card">
-          <div class="section-head" onclick="toggleSection(this)">
-            <span>🚨 Motif & Niveau de Gravité Clinique (Tri)</span><span class="chev">▼</span>
-          </div>
-          <div class="section-body">
-            <div class="form-group" style="margin-bottom:15px;">
-              <label>Motif Principal d'Admission *</label>
-              <input type="text" id="fMotif" required placeholder="Ex: Douleur thoracique aiguë, Trauma membre inférieur...">
-            </div>
-            <div class="form-group">
-              <label>Échelle de Tri de Gravité (Urgence)</label>
-              <div class="urgence-group">
-                <label class="urgence-pill u1"><input type="radio" name="fUrgence" value="U1" onclick="selectUrgencePill(this)">U1 — Réanimation</label>
-                <label class="urgence-pill u2"><input type="radio" name="fUrgence" value="U2" onclick="selectUrgencePill(this)">U2 — Urgence Lourde</label>
-                <label class="urgence-pill u3 checked"><input type="radio" name="fUrgence" value="U3" checked onclick="selectUrgencePill(this)">U3 — Consultative / Stable</label>
-                <label class="urgence-pill u4"><input type="radio" name="fUrgence" value="U4" onclick="selectUrgencePill(this)">U4 — Ambulatoire</label>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="section-card">
-          <div class="section-head" onclick="toggleSection(this)">
-            <span>📊 Paramètres Physiologiques & Constantes Vitales</span><span class="chev">▼</span>
-          </div>
-          <div class="section-body">
-            <div class="form-row">
-              <div class="form-group xs">
-                <label>Pulsations (bpm)</label>
-                <input type="number" id="fPuls" placeholder="75">
-              </div>
-              <div class="form-group sm">
-                <label>Tension Artérielle (mmHg)</label>
-                <input type="text" id="fTens" placeholder="120/80">
-              </div>
-              <div class="form-group xs">
-                <label>Fréq. Resp. (/min)</label>
-                <input type="number" id="fFrResp" placeholder="16">
-              </div>
-              <div class="form-group xs">
-                <label>Sat. O₂ (%)</label>
-                <input type="number" id="fSat" placeholder="98">
-              </div>
-              <div class="form-group xs">
-                <label>Temp. (°C)</label>
-                <input type="number" id="fTemp" step="0.1" placeholder="37.2">
-              </div>
-              <div class="form-group xs">
-                <label>HGT (mg/dL)</label>
-                <input type="number" id="fHgt" placeholder="104">
-              </div>
-            </div>
-            
-            <div style="margin-top:15px; margin-bottom:8px; font-weight:700; font-size:.8em; color:var(--text2); text-transform:uppercase;">Évaluation Neurologique (Score de Glasgow)</div>
-            <div class="glasgow-grid">
-              <div class="glasgow-card">
-                <h4>👁️ Yeux</h4>
-                <div class="glasgow-option"><label><input type="radio" name="gYeux" value="4" checked onclick="calcGlasgow()"> 4 - Spontanée</label></div>
-                <div class="glasgow-option"><label><input type="radio" name="gYeux" value="3" onclick="calcGlasgow()"> 3 - À la demande</label></div>
-                <div class="glasgow-option"><label><input type="radio" name="gYeux" value="2" onclick="calcGlasgow()"> 2 - À la douleur</label></div>
-                <div class="glasgow-option"><label><input type="radio" name="gYeux" value="1" onclick="calcGlasgow()"> 1 - Nulle</label></div>
-              </div>
-              <div class="glasgow-card">
-                <h4>🗣️ Verbe</h4>
-                <div class="glasgow-option"><label><input type="radio" name="gVerbe" value="5" checked onclick="calcGlasgow()"> 5 - Orientée</label></div>
-                <div class="glasgow-option"><label><input type="radio" name="gVerbe" value="4" onclick="calcGlasgow()"> 4 - Confuse</label></div>
-                <div class="glasgow-option"><label><input type="radio" name="gVerbe" value="3" onclick="calcGlasgow()"> 3 - Inappropriée</label></div>
-                <div class="glasgow-option"><label><input type="radio" name="gVerbe" value="2" onclick="calcGlasgow()"> 2 - Incompréhensible</label></div>
-                <div class="glasgow-option"><label><input type="radio" name="gVerbe" value="1" onclick="calcGlasgow()"> 1 - Nulle</label></div>
-              </div>
-              <div class="glasgow-card">
-                <h4>💪 Moteur</h4>
-                <div class="glasgow-option"><label><input type="radio" name="gMoteur" value="6" checked onclick="calcGlasgow()"> 6 - Obéit aux ordres</label></div>
-                <div class="glasgow-option"><label><input type="radio" name="gMoteur" value="5" onclick="calcGlasgow()"> 5 - Localise la douleur</label></div>
-                <div class="glasgow-option"><label><input type="radio" name="gMoteur" value="4" onclick="calcGlasgow()"> 4 - Évitement non adapté</label></div>
-                <div class="glasgow-option"><label><input type="radio" name="gMoteur" value="3" onclick="calcGlasgow()"> 3 - Flexion réflexe (Décortication)</label></div>
-                <div class="glasgow-option"><label><input type="radio" name="gMoteur" value="2" onclick="calcGlasgow()"> 2 - Extension réflexe (Décérébration)</label></div>
-                <div class="glasgow-option"><label><input type="radio" name="gMoteur" value="1" onclick="calcGlasgow()"> 1 - Nulle</label></div>
-              </div>
-            </div>
-            <div class="glasgow-total">
-              <div class="score-num" id="gTotalTxt">15</div>
-              <div class="score-label">SCORE GLASGOW TOTAL (GCS)</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="section-card">
-          <div class="section-head" onclick="toggleSection(this)">
-            <span>🧍 Cartographie Traumatique & Lésions</span><span class="chev">▼</span>
-          </div>
-          <div class="section-body">
-            <div class="body-schema-wrapper">
-              <div class="bsvg-container">
-                <svg viewBox="0 0 120 240" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="60" cy="30" r="14" class="bzone" data-z="Tête" onclick="clickBodyZone('Tête')"/>
-                  <path d="M42 48h36v60H42z" class="bzone" data-z="Tronc" onclick="clickBodyZone('Tronc')"/>
-                  <path d="M36 48l-14 42" class="bzone" data-z="Membre Supérieur G" onclick="clickBodyZone('Membre Supérieur G')"/>
-                  <path d="M84 48l14 42" class="bzone" data-z="Membre Supérieur D" onclick="clickBodyZone('Membre Supérieur D')"/>
-                  <path d="M46 108v70" class="bzone" data-z="Membre Inférieur G" onclick="clickBodyZone('Membre Inférieur G')"/>
-                  <path d="M74 108v70" class="bzone" data-z="Membre Inférieur D" onclick="clickBodyZone('Membre Inférieur D')"/>
-                </svg>
-                <div style="font-size:.7em; color:var(--text3); font-weight:600;">Cliquez sur la zone anatomique touchée</div>
-              </div>
-              <div class="body-legend">
-                <h4>Nature de la Lésion</h4>
-                <div class="lesion-chips">
-                  <div class="lesion-chip" onclick="selectLesionChip(this)">Plie / Coup</div>
-                  <div class="lesion-chip" onclick="selectLesionChip(this)">Fracture Suspectée</div>
-                  <div class="lesion-chip" onclick="selectLesionChip(this)">Brûlure thermique</div>
-                  <div class="lesion-chip" onclick="selectLesionChip(this)">Hémorragie active</div>
-                  <div class="lesion-chip" onclick="selectLesionChip(this)" id="chipAutre">Autre (Saisie libre...)</div>
-                </div>
-                <div class="autre-lesion-box" id="boxAutreLesion">
-                  <label>Précision Lésionnelle</label>
-                  <input type="text" id="fAutreLesionTxt" placeholder="Ex: Écorchure profonde superficielle">
-                </div>
-                <div style="margin-top:14px;">
-                  <h4 style="margin-bottom:6px;">Cartographie Sélectionnée :</h4>
-                  <div id="zoneBadgesContainer" style="min-height:30px;"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="section-card">
-          <div class="section-head" onclick="toggleSection(this)">
-            <span>📋 Anamnèse Rapide & Recoupement</span><span class="chev">▼</span>
-          </div>
-          <div class="section-body">
-            <div class="yn-grid">
-              <div class="yn-item">
-                <div class="yn-label">Anticoagulants / Antiagrégants</div>
-                <div class="yn-btns"><button class="yn-btn yes" onclick="clickYn(this,'fAnticoag','Oui')">OUI</button><button class="yn-btn no active" onclick="clickYn(this,'fAnticoag','Non')">NON</button></div>
-              </div>
-              <div class="yn-item">
-                <div class="yn-label">Allergie Connue Notifiée</div>
-                <div class="yn-btns"><button class="yn-btn yes" onclick="clickYn(this,'fAllergie','Oui')">OUI</button><button class="yn-btn no active" onclick="clickYn(this,'fAllergie','Non')">NON</button></div>
-              </div>
-              <div class="yn-item">
-                <div class="yn-label">Patient Isolant / Isolement requis</div>
-                <div class="yn-btns"><button class="yn-btn yes" onclick="clickYn(this,'fIsolement','Oui')">OUI</button><button class="yn-btn no active" onclick="clickYn(this,'fIsolement','Non')">NON</button></div>
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Observations Générales & Prescriptions Initiales</label>
-              <textarea id="fObservations" placeholder="Observations cliniques complémentaires, antécédents notables..."></textarea>
-            </div>
-          </div>
-        </div>
-
-        <div class="actions-bar">
-          <button class="btn btn-ghost btn-lg" onclick="resetFicheForm()">Vider le formulaire</button>
-          <button class="btn btn-primary btn-lg" onclick="saveFicheComplete()">Enregistrer & Valider la Fiche</button>
-        </div>
-      </div>
-
-      <div id="pageList" class="app-page" style="display:none;">
-        <div class="page-header">
-          <div>
-            <h2>Base Hospitalière des Patients Accueillis</h2>
-            <p>Visualisation des dossiers d'identité et de l'historique de l'ensemble de leurs fiches médicales.</p>
-          </div>
-        </div>
-        <div class="card" style="padding:16px; margin-bottom:16px;">
-          <div class="form-row" style="margin-bottom:0;">
-            <div class="form-group" style="min-width:260px;">
-              <input type="text" id="searchQuery" class="input" placeholder="Rechercher par nom, prénom ou NISS..." oninput="loadPatients()">
-            </div>
-            <button class="btn btn-primary" onclick="loadPatients()">Filtrer la base</button>
-          </div>
-        </div>
-        <div class="table-wrapper">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Identité du Patient</th>
-                <th>Sexe</th>
-                <th>Date de Naissance</th>
-                <th>NISS</th>
-                <th style="text-align:right;">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="patientsTableBody">
-              <tr><td colspan="5" style="text-align:center; color:var(--text3);">Chargement de la base patient...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="pageAdmin" class="app-page" style="display:none;">
-        <div class="page-header">
-          <div>
-            <h2>Supervision Technico-Médicale & Habilitations</h2>
-            <p>Contrôle et validation réglementaire des accès des soignants et médecins du CHL.</p>
-          </div>
-        </div>
-        <div class="table-wrapper">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Opérateur / Médecin</th>
-                <th>Email Réseau</th>
-                <th>Rôle Attribué</th>
-                <th>Statut d'Accès</th>
-              </tr>
-            </thead>
-            <tbody id="adminTableBody">
-              <tr><td colspan="4" style="text-align:center; color:var(--text3);">Vérification des habilitations...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
+  <div style="padding:40px; color:var(--text)">
+    <h2>Bienvenue sur l'application CHL Encodage Patients</h2>
+    <p>Vous êtes maintenant connecté avec succès.</p>
+    <button class="btn btn-danger" onclick="sb.auth.signOut(); location.reload();" style="margin-top:20px">Se Déconnecter</button>
   </div>
 </div>
-
-<div id="patientDetailsModal" class="modal-overlay" style="display:none;">
-  <div class="modal-box">
-    <div class="modal-head">
-      <h2 id="modalPatientTitle">Dossier Clinique Patient — CHL</h2>
-      <button class="modal-close" onclick="closePatientModal()">×</button>
-    </div>
-
-    <div class="modal-tabs">
-      <button class="modal-tab-btn active" id="btnTabIdentite" onclick="switchModalTab('tab-identite')">📋 Identité & Infos</button>
-      <button class="modal-tab-btn" id="btnTabMedical" onclick="switchModalTab('tab-medical')">🩺 Fiches Médicales (<span id="modalRecordCount">0</span>)</button>
-    </div>
-
-    <div id="tab-identite" class="tab-content active">
-      <div class="modal-section">
-        <div class="modal-section-title">Informations Civiles</div>
-        <div class="modal-grid" id="modalIdentiteGrid">
-          </div>
-      </div>
-    </div>
-
-    <div id="tab-medical" class="tab-content">
-      <div class="modal-section">
-        <div class="modal-section-title">Historique Chronologique des Fiches d'Encodage</div>
-        <div class="medical-records-list" id="modalMedicalRecordsContainer">
-          </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="toast-container" id="toastContainer"></div>
 
 <script>
+// Initialisation de Supabase
 const sb = supabase.createClient(window.CHL_CONFIG.supabase.url, window.CHL_CONFIG.supabase.anon);
 
-let CURRENT_USER = null;
-let SELECTED_ANATOMY_ZONES = [];
-let ACTIVE_YN_VALUES = { fAnticoag:'Non', fAllergie:'Non', fIsolement:'Non' };
+let loginCaptchaAns = 0;
+let regCaptchaAns = 0;
+let loginAttempts = 0;
+let lockoutTimer = null;
 
-// INACTIVITY LOGIC
-let lastActivityTime = Date.now();
-setInterval(() => {
-  if(!CURRENT_USER) return;
-  let elapsed = Math.floor((Date.now() - lastActivityTime) / 1000);
-  let remaining = 900 - elapsed; // 15 mins
-  if(remaining <= 0) { doLogout(); return; }
-  let m = Math.floor(remaining / 60).toString().padStart(2,'0');
-  let s = (remaining % 60).toString().padStart(2,'0');
-  const el = document.getElementById('inactStatusTxt');
-  if(el) el.textContent = `${m}:${s}`;
-}, 1000);
-
-function updateActivity() { lastActivityTime = Date.now(); }
-['click','keypress','mousemove','touchstart'].forEach(e => document.addEventListener(e, updateActivity));
-
-// UI UTILS
-function toast(msg, type='success') {
-  const c = document.getElementById('toastContainer');
-  if(!c) return;
-  const t = document.createElement('div');
-  t.className = `toast t-${type}`;
-  t.textContent = msg;
-  c.appendChild(t);
-  setTimeout(() => t.remove(), 4000);
+function genLoginCaptcha() {
+  const a = Math.floor(Math.random() * 9) + 1;
+  const b = Math.floor(Math.random() * 9) + 1;
+  loginCaptchaAns = a + b;
+  const el = document.getElementById('loginCaptchaQ');
+  if (el) el.textContent = `${a} + ${b} = ?`;
 }
 
-function toggleSidebar() { document.getElementById('mainSidebar').classList.toggle('collapsed'); }
-function toggleDarkMode() {
-  document.body.classList.toggle('dark-mode');
-  localStorage.setItem('chl_dark', document.body.classList.contains('dark-mode') ? '1' : '0');
-}
-function toggleSection(head) {
-  head.classList.toggle('collapsed');
-  head.nextElementSibling.classList.toggle('hidden');
+function genRegCaptcha() {
+  const a = Math.floor(Math.random() * 9) + 1;
+  const b = Math.floor(Math.random() * 9) + 1;
+  regCaptchaAns = a + b;
+  const el = document.getElementById('regCaptchaQ');
+  if (el) el.textContent = `${a} + ${b} = ?`;
 }
 
-function switchNav(el, pageId) {
-  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-  document.querySelectorAll('.app-page').forEach(p => p.style.display = 'none');
-  el.classList.add('active');
-  document.getElementById(pageId).style.display = 'block';
-  
-  const titleMap = { pageFiche:'Nouvelle Fiche Médicale', pageList:'Base Patients', pageAdmin:'Supervision Technico-Médicale' };
-  document.getElementById('topbarTitle').textContent = titleMap[pageId] || 'CHL';
-
-  if(pageId === 'pageList') loadPatients();
-  if(pageId === 'pageAdmin') loadAdmin();
+function switchAuthView(view) {
+  document.querySelectorAll('.auth-view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.auth-error, .auth-success').forEach(e => e.classList.remove('show'));
+  if (view === 'Login') {
+    document.getElementById('viewLogin').classList.add('active');
+    genLoginCaptcha();
+  } else {
+    document.getElementById('viewRegister').classList.add('active');
+    genRegCaptcha();
+  }
 }
 
-// NAVIGATION DES ONGLETS DANS LA MODAL PATIENT
-function switchModalTab(tabId) {
-  document.querySelectorAll('.modal-tab-btn').forEach(btn => btn.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  
-  if(tabId === 'tab-identite') document.getElementById('btnTabIdentite').classList.add('active');
-  if(tabId === 'tab-medical') document.getElementById('btnTabMedical').classList.add('active');
-  
-  document.getElementById(tabId).classList.add('active');
+// Fonction de notification native simplifiée en remplacement de toast() si absent
+function showNotification(msg, type = 'info') {
+  alert(`${type.toUpperCase()} : ${msg}`);
 }
 
-// FORM EVENTS
-function selectUrgencePill(radio) {
-  document.querySelectorAll('.urgence-pill').forEach(p => p.classList.remove('checked'));
-  radio.parentElement.classList.add('checked');
-}
-function clickYn(btn, field, val) {
-  btn.parentElement.querySelectorAll('.yn-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  ACTIVE_YN_VALUES[field] = val;
-}
-function selectLesionChip(chip) {
-  document.querySelectorAll('.lesion-chip').forEach(c => c.classList.remove('selected'));
-  chip.classList.add('selected');
-  document.getElementById('boxAutreLesion').className = (chip.id === 'chipAutre') ? 'autre-lesion-box visible' : 'autre-lesion-box';
-}
-function clickBodyZone(zoneName) {
-  const chipSel = document.querySelector('.lesion-chip.selected');
-  if(!chipSel) { toast('Sélectionnez d\'abord le type de lésion dans la liste à droite !', 'warning'); return; }
-  
-  let lesionTxt = chipSel.id === 'chipAutre' ? document.getElementById('fAutreLesionTxt').value.trim() : chipSel.textContent;
-  if(!lesionTxt) { lesionTxt = "Lésion indéterminée"; }
-
-  SELECTED_ANATOMY_ZONES.push({ zone: zoneName, details: lesionTxt });
-  renderZoneBadges();
-}
-function renderZoneBadges() {
-  const container = document.getElementById('zoneBadgesContainer');
-  container.innerHTML = '';
-  SELECTED_ANATOMY_ZONES.forEach((z, idx) => {
-    const b = document.createElement('span');
-    b.className = 'zone-badge badge-red';
-    b.innerHTML = `${z.zone} : <b>${z.details}</b> <button onclick="removeZoneBadge(${idx})">×</button>`;
-    container.appendChild(b);
-  });
-}
-function removeZoneBadge(idx) {
-  SELECTED_ANATOMY_ZONES.splice(idx, 1);
-  renderZoneBadges();
-}
-function calcGlasgow() {
-  let y = parseInt(document.querySelector('input[name="gYeux"]:checked')?.value || 4);
-  let v = parseInt(document.querySelector('input[name="gVerbe"]:checked')?.value || 5);
-  let m = parseInt(document.querySelector('input[name="gMoteur"]:checked')?.value || 6);
-  document.getElementById('gTotalTxt').textContent = (y + v + m);
+async function checkSupabaseStatus() {
+  try {
+    const { data, error } = await sb.from('chlencodage_profiles').select('id').limit(1);
+    const badge = document.getElementById('authServerStatus');
+    if (badge) {
+      badge.textContent = "Opérationnel";
+      badge.style.color = "#10b981";
+    }
+  } catch (e) {
+    const badge = document.getElementById('authServerStatus');
+    if (badge) {
+      badge.textContent = "Hors ligne ou Erreur Table";
+      badge.style.color = "#ef4444";
+    }
+  }
 }
 
-// AUTH LOGIC
-let captchaA = 0;
-function genCaptcha() {
-  let a = Math.floor(Math.random()*9)+1, b = Math.floor(Math.random()*9)+1;
-  captchaA = a + b;
-  document.getElementById('loginCaptchaQ').textContent = `${a} + ${b} =`;
-}
-function gotoAuthView(v) {
-  document.querySelectorAll('.auth-view').forEach(view => view.classList.remove('active'));
-  document.getElementById(`view${v}`).classList.add('active');
-}
-
+// ================================================
+// ACTION : SE CONNECTER (doLogin)
+// ================================================
 async function doLogin() {
-  const email = document.getElementById('loginEmail').value.trim();
-  const pass = document.getElementById('loginPass').value;
-  const cap = parseInt(document.getElementById('loginCaptchaA').value);
+  const errBox = document.getElementById('authError');
+  const succBox = document.getElementById('authSuccess');
+  errBox.classList.remove('show');
+  succBox.classList.remove('show');
 
-  if(cap !== captchaA) { toast('Code de sécurité incorrect', 'error'); genCaptcha(); return; }
-
-  const { data, error } = await sb.auth.signInWithPassword({ email: email, password: pass });
-  if(error) { toast(error.message, 'error'); return; }
-
-  const u = data.user;
-  const { data: prof } = await sb.from('chlencodage_profiles').select('*').eq('id', u.id).single();
-  
-  if(!prof || !prof.actif) {
-    toast('Accès restreint. Compte en attente d\'activation par la direction.', 'warning');
-    sb.auth.signOut();
+  if (loginAttempts >= 5) {
+    errBox.textContent = "❌ Trop de tentatives. Compte temporairement bloqué.";
+    errBox.classList.add('show');
     return;
   }
 
-  CURRENT_USER = prof;
-  setupSessionUI();
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const captcha = document.getElementById('loginCaptchaA').value.trim();
+
+  if (!email || !pass) {
+    errBox.textContent = "❌ Veuillez compléter tous les champs.";
+    errBox.classList.add('show');
+    return;
+  }
+
+  if (parseInt(captcha) !== loginCaptchaAns) {
+    errBox.textContent = "❌ Code de sécurité (Captcha) incorrect.";
+    errBox.classList.add('show');
+    genLoginCaptcha();
+    return;
+  }
+
+  const btn = document.getElementById('btnLogin');
+  btn.disabled = true;
+  btn.textContent = "Authentification...";
+
+  // Tentative de connexion via Supabase Auth
+  const { data, error } = await sb.auth.signInWithPassword({ email: email, password: pass });
+
+  if (error) {
+    console.error("Détails complets de l'erreur Supabase Auth :", error);
+    loginAttempts++;
+    btn.disabled = false;
+    btn.textContent = "Se Connecter";
+    genLoginCaptcha();
+    
+    // Message personnalisé selon la cause exacte de l'erreur Supabase
+    if (error.status === 400) {
+      errBox.textContent = `❌ Identifiants invalides ou compte non activé. (${error.message})`;
+    } else {
+      errBox.textContent = `❌ Erreur (${error.status}) : ${error.message}`;
+    }
+    errBox.classList.add('show');
+    return;
+  }
+
+  // Si pas d'erreur, l'utilisateur est connecté dans l'instance Auth
+  succBox.textContent = "✅ Connexion réussie ! Chargement...";
+  succBox.classList.add('show');
+  
+  setTimeout(() => {
+    document.getElementById('authGate').classList.remove('show');
+    document.getElementById('appContent').classList.add('show');
+  }, 1000);
 }
 
+// ================================================
+// ACTION : S'INSCRIRE (doRegister)
+// ================================================
 async function doRegister() {
-  const nom = document.getElementById('regName').value.trim();
+  const errBox = document.getElementById('authError');
+  const succBox = document.getElementById('authSuccess');
+  errBox.classList.remove('show');
+  succBox.classList.remove('show');
+
+  const name = document.getElementById('regName').value.trim();
   const email = document.getElementById('regEmail').value.trim();
   const pass = document.getElementById('regPass').value;
+  const role = document.getElementById('regRole').value;
+  const captcha = document.getElementById('regCaptchaA').value.trim();
 
-  if(!nom || !email || pass.length < 6) { toast('Formulaire d\'enregistrement invalide', 'error'); return; }
-
-  const { data, error } = await sb.auth.signUp({ email: email, password: pass, options:{ data:{ full_name: nom } } });
-  if(error) { toast(error.message, 'error'); return; }
-
-  toast('Inscription transmise ! En attente d\'approbation.', 'success');
-  gotoAuthView('Login');
-}
-
-async function doLogout() {
-  await sb.auth.signOut();
-  CURRENT_USER = null;
-  document.getElementById('appContent').classList.remove('show');
-  document.getElementById('authGate').classList.add('show');
-  genCaptcha();
-}
-
-function setupSessionUI() {
-  document.getElementById('authGate').classList.remove('show');
-  document.getElementById('appContent').classList.add('show');
-  document.getElementById('usrAv').textContent = CURRENT_USER.nom.charAt(0).toUpperCase();
-  document.getElementById('usrName').textContent = CURRENT_USER.nom;
-  
-  const rEl = document.getElementById('usrRole');
-  rEl.className = `user-role role-${CURRENT_USER.role}`;
-  rEl.textContent = CURRENT_USER.role;
-
-  if(['supervision','direction'].includes(CURRENT_USER.role)) {
-    document.getElementById('lblAdminSec').style.display = 'block';
-    document.getElementById('btnNavAdmin').style.display = 'flex';
-  }
-}
-
-// ENCODAGE : CRÉATION PATIENT ET FICHE MÉDICALE ATOMIQUE
-async function saveFicheComplete() {
-  const nom = document.getElementById('fNom').value.trim();
-  const prenom = document.getElementById('fPrenom').value.trim();
-  const sexe = document.getElementById('fSexe').value;
-  const dna = document.getElementById('fDna').value;
-  const niss = document.getElementById('fNiss').value.trim();
-  const motif = document.getElementById('fMotif').value.trim();
-  const urgence = document.querySelector('input[name="fUrgence"]:checked')?.value || 'U3';
-
-  if(!nom || !prenom || !motif) { toast('Veuillez remplir les champs obligatoires (*)', 'error'); return; }
-
-  // 1. Chercher ou insérer le patient
-  let patientId = null;
-  const { data: ext } = await sb.from('chlencodage_patients').select('id').eq('nom', nom).eq('prenom', prenom).maybeSingle();
-  
-  if(ext) {
-    patientId = ext.id;
-  } else {
-    const { data: nPat, error: errP } = await sb.from('chlencodage_patients').insert({
-      nom: nom, prenom: prenom, sexe: sexe, date_naissance: dna || null, niss: niss || null
-    }).select('id').single();
-    if(errP) { toast('Erreur Patient: ' + errP.message, 'error'); return; }
-    patientId = nPat.id;
+  if (!name || !email || !pass) {
+    errBox.textContent = "❌ Veuillez remplir tous les champs.";
+    errBox.classList.add('show');
+    return;
   }
 
-  // 2. Insérer la fiche médicale d'urgence liée au patient inséré ou existant
-  const scoreGcs = parseInt(document.getElementById('gTotalTxt').textContent);
-  const ficheObj = {
-    patient_id: patientId,
-    motif: motif,
-    urgence: urgence,
-    tension: document.getElementById('fTens').value.trim() || null,
-    pulsations: parseInt(document.getElementById('fPuls').value) || null,
-    freq_resp: parseInt(document.getElementById('fFrResp').value) || null,
-    saturation: parseInt(document.getElementById('fSat').value) || null,
-    temperature: parseFloat(document.getElementById('fTemp').value) || null,
-    hgt: parseInt(document.getElementById('fHgt').value) || null,
-    glasgow_total: scoreGcs,
-    anticoagulants: ACTIVE_YN_VALUES['fAnticoag'],
-    allergies: ACTIVE_YN_VALUES['fAllergie'],
-    isolement: ACTIVE_YN_VALUES['fIsolement'],
-    remarques: document.getElementById('fObservations').value.trim() || null,
-    soignant_nom: CURRENT_USER.nom,
-    cartographie_lesions: SELECTED_ANATOMY_ZONES
-  };
+  if (parseInt(captcha) !== regCaptchaAns) {
+    errBox.textContent = "❌ Captcha de sécurité incorrect.";
+    errBox.classList.add('show');
+    genRegCaptcha();
+    return;
+  }
 
-  const { error: errF } = await sb.from('chlencodage_fiches').insert(ficheObj);
-  if(errF) { toast('Erreur lors de la création de la fiche : ' + errF.message, 'error'); return; }
+  const btn = document.getElementById('btnRegister');
+  btn.disabled = true;
 
-  toast('🩺 Fiche Clinique et Patient Validés avec succès !', 'success');
-  resetFicheForm();
-}
-
-function resetFicheForm() {
-  document.getElementById('fNom').value = ''; document.getElementById('fPrenom').value = '';
-  document.getElementById('fDna').value = ''; document.getElementById('fNiss').value = '';
-  document.getElementById('fMotif').value = ''; document.getElementById('fTens').value = '';
-  document.getElementById('fPuls').value = ''; document.getElementById('fFrResp').value = '';
-  document.getElementById('fSat').value = ''; document.getElementById('fTemp').value = '';
-  document.getElementById('fHgt').value = ''; document.getElementById('fObservations').value = '';
-  SELECTED_ANATOMY_ZONES = []; renderZoneBadges();
-}
-
-// LOGIQUE EMBARQUÉE : CHARGEMENT DES DONNÉES & BASE PATIENTS
-async function loadPatients() {
-  const q = document.getElementById('searchQuery').value.trim();
-  let req = sb.from('chlencodage_patients').select('*');
-  if(q) { req = req.or(`nom.ilike.%${q}%,prenom.ilike.%${q}%,niss.ilike.%${q}%`); }
-  
-  const { data, error } = await req.order('nom', { ascending: true });
-  const tbody = document.getElementById('patientsTableBody');
-  if(error || !data) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Erreur réseau...</td></tr>`; return; }
-
-  if(data.length === 0) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text3);">Aucun dossier patient trouvé.</td></tr>`; return; }
-
-  tbody.innerHTML = '';
-  data.forEach(p => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><b>${p.nom.toUpperCase()}</b> ${p.prenom}</td>
-      <td><span class="badge badge-blue">${p.sexe || 'N/C'}</span></td>
-      <td>${p.date_naissance || 'Non spécifiée'}</td>
-      <td><code style="font-family:var(--mono); font-size:0.9em;">${p.niss || 'N/A'}</code></td>
-      <td style="text-align:right;">
-        <button class="btn btn-cyan btn-sm" onclick="viewPatientFullDossier('${p.id}')">👁️ Visualiser Dossier Complet</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
+  // Création de compte dans Supabase Auth
+  const { data, error } = await sb.auth.signUp({
+    email: email,
+    password: pass,
+    options: {
+      data: { display_name: name, requested_role: role }
+    }
   });
-}
 
-// VISUALISATION AMÉLIORÉE ET ENRICHIE DU DOSSIER PATIENT CLINIQUES ET SES FICHES
-async function viewPatientFullDossier(patientId) {
-  // 1. Charger les détails fixes du patient
-  const { data: patient, error: errP } = await sb.from('chlencodage_patients').select('*').eq('id', patientId).single();
-  if(errP || !patient) { toast('Dossier introuvable', 'error'); return; }
-
-  // 2. Charger simultanément l'ensemble de ses fiches cliniques associées
-  const { data: fiches, error: errF } = await sb.from('chlencodage_fiches').select('*').eq('patient_id', patientId).order('created_at', { ascending: false });
-
-  // Assigner l'entête et le compteur d'onglets
-  document.getElementById('modalPatientTitle').textContent = `Dossier Médical de : ${patient.nom.toUpperCase()} ${patient.prenom}`;
-  document.getElementById('modalRecordCount').textContent = fiches ? fiches.length : 0;
-
-  // Rendu Onglet Identité
-  document.getElementById('modalIdentiteGrid').innerHTML = `
-    <div class="modal-field"><div class="lbl">Nom de famille</div><div class="val">${patient.nom.toUpperCase()}</div></div>
-    <div class="modal-field"><div class="lbl">Prénom</div><div class="val">${patient.prenom}</div></div>
-    <div class="modal-field"><div class="lbl">Genre / Sexe</div><div class="val">${patient.sexe || 'Non renseigné'}</div></div>
-    <div class="modal-field"><div class="lbl">Date de naissance</div><div class="val">${patient.date_naissance || 'Inconnue'}</div></div>
-    <div class="modal-field" style="grid-column: span 2;"><div class="lbl">Numéro Sécurité Sociale (NISS)</div><div class="val">${patient.niss || 'Aucun'}</div></div>
-  `;
-
-  // Rendu Onglet Fiches Médicales (Rendu Propre et Visuel)
-  const container = document.getElementById('modalMedicalRecordsContainer');
-  container.innerHTML = '';
-
-  if(!fiches || fiches.length === 0) {
-    container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text3);">Aucune fiche clinique n'a encore été ouverte pour ce patient.</div>`;
-  } else {
-    fiches.forEach(fiche => {
-      let uClass = 'badge-blue';
-      if(fiche.urgence === 'U1') uClass = 'badge-red';
-      if(fiche.urgence === 'U2') uClass = 'badge-orange';
-      if(fiche.urgence === 'U3') uClass = 'badge-green';
-
-      const dt = new Date(fiche.created_at).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
-
-      // Parsing des éventuelles zones lésionnelles
-      let lesHTML = '';
-      if(fiche.cartographie_lesions && fiche.cartographie_lesions.length > 0) {
-        fiche.cartographie_lesions.forEach(l => {
-          lesHTML += `<span class="modal-tag">🤕 ${l.zone} (${l.details})</span>`;
-        });
-      } else {
-        lesHTML = '<span style="color:var(--text3); font-size:0.9em;">Aucune lésion traumatique</span>';
-      }
-
-      const card = document.createElement('div');
-      card.className = 'medical-record-card';
-      card.innerHTML = `
-        <div class="record-header">
-          <span class="record-date">📋 Examen du ${dt}</span>
-          <span class="badge ${uClass}">${fiche.urgence || 'U3'}</span>
-        </div>
-        <div class="record-grid">
-          <div class="modal-field" style="grid-column: span 2;"><div class="lbl">Motif clinique</div><div class="val" style="color:var(--navy); font-weight:700;">${fiche.motif}</div></div>
-          <div class="modal-field"><div class="lbl">Soignant Référent</div><div class="val">${fiche.soignant_nom || 'N/A'}</div></div>
-          <div class="modal-field"><div class="lbl">Constantes vitales</div><div class="val">💓 ${fiche.pulsations || '--'} bpm | 🩸 ${fiche.tension || '--'} mmHg</div></div>
-          <div class="modal-field"><div class="lbl">Neurologie (GCS)</div><div class="val">🧠 Score Glasgow : <b>${fiche.glasgow_total || '15'}/15</b></div></div>
-          <div class="modal-field"><div class="lbl">Paramètres complémentaires</div><div class="val">🌡️ ${fiche.temperature || '--'}°C | 💨 ${fiche.saturation || '--'}% Sat</div></div>
-          <div class="modal-field" style="grid-column: span 2;"><div class="lbl">Traumatologie / Cartographie</div><div class="val" style="margin-top:4px;">${lesHTML}</div></div>
-          <div class="modal-field" style="grid-column: span 2;"><div class="lbl">Antécédents & Terrain</div><div class="val" style="font-size:0.82em;">💊 Anticoag: <b>${fiche.anticoagulants}</b> | 🛡️ Allergie: <b>${fiche.allergies}</b> | 🚪 Isolement: <b>${fiche.isolement}</b></div></div>
-          <div class="modal-field" style="grid-column: span 2;"><div class="lbl">Observations / Prescriptions cliniques</div><div class="val" style="white-space:pre-wrap; font-weight:400; line-height:1.4; color:var(--text2);">${fiche.remarques || 'Aucune observation complémentaire.'}</div></div>
-        </div>
-      `;
-      container.appendChild(card);
-    });
+  if (error) {
+    console.error("Erreur Inscription :", error);
+    errBox.textContent = `❌ Échec de la création : ${error.message}`;
+    errBox.classList.add('show');
+    btn.disabled = false;
+    genRegCaptcha();
+    return;
   }
 
-  switchModalTab('tab-identite');
-  document.getElementById('patientDetailsModal').style.display = 'flex';
-}
-
-function closePatientModal() { document.getElementById('patientDetailsModal').style.display = 'none'; }
-
-// ADMIN MANAGEMENT LOGIC
-async function loadAdmin() {
-  const { data, error } = await sb.from('chlencodage_profiles').select('*').order('nom', { ascending: true });
-  const tbody = document.getElementById('adminTableBody');
-  if(error || !data) { tbody.innerHTML = `<tr><td colspan="4">Erreur réseau...</td></tr>`; return; }
-
-  tbody.innerHTML = '';
-  data.forEach(p => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><b>${p.nom}</b></td>
-      <td><span style="font-family:var(--mono); font-size:0.9em; color:var(--text2);">${p.email}</span></td>
-      <td>
-        <select class="input" style="padding:4px 8px; width:150px;" onchange="updateUserRole('${p.id}', this.value)">
-          <option value="soignant" ${p.role==='soignant'?'selected':''}>Soignant</option>
-          <option value="supervision" ${p.role==='supervision'?'selected':''}>Supervision</option>
-          <option value="direction" ${p.role==='direction'?'selected':''}>Direction</option>
-        </select>
-      </td>
-      <td>
-        <input type="checkbox" ${p.actif?'checked':''} onchange="toggleUserActif('${p.id}', this.checked)">
-        <span style="font-size:0.9em; font-weight:600; margin-left:4px;">${p.actif?'Accès Actif':'Désactivé'}</span>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-async function updateUserRole(id, role) {
-  const { error } = await sb.from('chlencodage_profiles').update({ role: role }).eq('id', id);
-  if(error) { toast('Erreur: ' + error.message, 'error'); return; }
-  toast('✅ Rôle mis à jour', 'success');
-}
-async function toggleUserActif(id, actif) {
-  const { error } = await sb.from('chlencodage_profiles').update({ actif: actif }).eq('id', id);
-  if(error) { toast('Erreur: ' + error.message, 'error'); return; }
-  toast('✅ Statut d\'habilitation mis à jour', 'success');
-  loadAdmin();
-}
-
-// LIFECYCLE INITIALIZATION
-document.addEventListener('DOMContentLoaded', function() {
+  // Création réussie
+  succBox.textContent = "🎉 Compte créé ! Vous pouvez maintenant vous connecter.";
+  succBox.classList.add('show');
   setTimeout(() => {
+    switchAuthView('Login');
+    btn.disabled = false;
+  }, 2000);
+}
+
+// Gestion des écoutes d'événements du DOM au démarrage
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
     const ls = document.getElementById('loadingScreen');
-    if(ls) ls.style.display = 'none';
+    if (ls) ls.style.display = 'none';
+    const gate = document.getElementById('authGate');
+    if (gate) gate.classList.add('show');
   }, 800);
 
-  ['loginEmail', 'loginPass', 'loginCaptchaA'].forEach(id => {
+  // Configuration de la touche Entrée sur les champs d'authentification
+  ['loginEmail', 'loginPass', 'loginCaptchaA'].forEach(function(id) {
     const el = document.getElementById(id);
-    if(el) el.addEventListener('keypress', e => { if(e.key === 'Enter') { e.preventDefault(); doLogin(); } });
+    if (el) el.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        doLogin();
+      }
+    });
   });
 
-  if(localStorage.getItem('chl_dark') === '1') {
-    document.body.classList.add('dark-mode');
-  }
-
-  genCaptcha();
-
-  // Restauration automatique de session
-  (async function() {
-    const { data : { session } } = await sb.auth.getSession();
-    if(session && session.user) {
-      const { data: prof } = await sb.from('chlencodage_profiles').select('*').eq('id', session.user.id).single();
-      if(prof && prof.actif) {
-        CURRENT_USER = prof;
-        setupSessionUI();
-        return;
-      }
-    }
-    document.getElementById('authGate').classList.add('show');
-  })();
+  genLoginCaptcha();
+  checkSupabaseStatus();
 });
 </script>
 </body>
