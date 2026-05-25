@@ -13,6 +13,7 @@ window.CHL_CONFIG = window.CHL_CONFIG || {
 };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{--navy:#1a2f6b;--navy-dark:#0d1a3a;--navy-mid:#16285a;--cyan:#00c2d4;--cyan-dark:#009aaa;--bg:#f0f4f8;--bg2:#e4eaf2;--bg3:#d8e0eb;--card:#ffffff;--text:#0d1a3a;--text2:#4a5568;--text3:#a0aec0;--border:#cbd5e0;--shadow:rgba(13,26,58,.09);--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--purple:#7c3aed;--input-bg:#fff;--radius:12px;--radius-sm:7px;--font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;--sidebar-w:260px}
@@ -397,6 +398,7 @@ input[type="checkbox"],input[type="radio"]{width:17px;height:17px;accent-color:v
       <div style="display:flex;align-items:center;gap:8px;">
         <button id="ficheViewPatBtn" style="display:none;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);color:#fff;padding:6px 14px;border-radius:20px;cursor:pointer;font-size:.82em;font-weight:700;" onclick="viewFiche(_ficheViewId)">👤 Patient</button>
         <button id="ficheViewMedBtn" style="display:none;background:linear-gradient(135deg,var(--cyan-dark),var(--cyan));border:none;color:var(--navy-dark);padding:6px 14px;border-radius:20px;cursor:pointer;font-size:.82em;font-weight:800;" onclick="viewMedicalFiche(_ficheViewId)">🏥 Fiche Médicale</button>
+        <button id="ficheViewPdfBtn" style="background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);color:#fff;padding:6px 14px;border-radius:20px;cursor:pointer;font-size:.82em;font-weight:700;" onclick="exportFichePDF()">📄 PDF</button>
         <button class="modal-close" onclick="closeFicheViewModal()">×</button>
       </div>
     </div>
@@ -1221,6 +1223,27 @@ async function viewFiche(id){
   document.getElementById('ficheViewModal').style.display='flex';
 }
 function closeFicheViewModal(){document.getElementById('ficheViewModal').style.display='none';_ficheViewId=null;_ficheViewData=null;}
+function exportFichePDF(){
+  var body=document.getElementById('ficheViewBody');
+  var title=(document.getElementById('ficheViewTitle')||{}).textContent||'Fiche';
+  if(!body||!body.innerHTML.trim()){toast('Aucune fiche à exporter','error');return;}
+  if(typeof html2pdf==='undefined'){toast('Module PDF non chargé','error');return;}
+  var head=document.getElementById('ficheViewHead');
+  var headerHTML=head?'<div style="background:linear-gradient(135deg,#0a1532,#1a2f6b);color:#fff;padding:18px 22px;border-radius:10px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;"><h1 style="margin:0;font-size:1.4em;font-weight:800;">'+(title||'Fiche')+'</h1><div style="font-size:.78em;opacity:.85;">CHL — '+new Date().toLocaleString('fr-BE')+'</div></div>':'';
+  var wrap=document.createElement('div');
+  wrap.style.cssText='padding:24px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#1a1a1a;background:#fff;width:794px;';
+  wrap.innerHTML=headerHTML+body.innerHTML;
+  // Neutralize problematic styles for PDF: drop sticky/fixed positioning and shadows
+  wrap.querySelectorAll('*').forEach(function(el){
+    var st=el.getAttribute('style')||'';
+    if(/position\s*:\s*(fixed|sticky)/i.test(st)){el.setAttribute('style',st.replace(/position\s*:\s*(fixed|sticky)\s*;?/gi,''));}
+  });
+  var safeName=(title||'fiche').replace(/[^a-z0-9-_]+/gi,'_').toLowerCase();
+  var opt={margin:[10,10,10,10],filename:'CHL_'+safeName+'_'+new Date().toISOString().slice(0,10)+'.pdf',image:{type:'jpeg',quality:0.96},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}};
+  toast('📄 Génération du PDF...','info');
+  document.body.appendChild(wrap);wrap.style.position='fixed';wrap.style.left='-10000px';wrap.style.top='0';
+  html2pdf().set(opt).from(wrap).save().then(function(){document.body.removeChild(wrap);toast('✅ PDF téléchargé','success');}).catch(function(e){try{document.body.removeChild(wrap);}catch(_){}toast('Erreur PDF: '+(e&&e.message||e),'error');});
+}
 
 async function viewMedicalFiche(ficheId){
   if(!ficheId)return;
