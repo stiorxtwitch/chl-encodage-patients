@@ -23,3 +23,4 @@ const CHL_CONFIG = {
     minPasswordLength:   8
   }
 };
+export { CHL_CONFIG };
