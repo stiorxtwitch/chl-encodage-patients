@@ -1408,27 +1408,27 @@ function _modalClose(id){const el=document.getElementById(id);if(el)el.style.dis
 // ================================================
 function renderRefusSoins(){return _renderSimpleModule({title:'Refus de Soins',icon:'🚫',desc:'Patients ayant refusé les soins.',openFn:'openRefusModal',saveFn:'saveRefus',listId:'refusList',modalId:'refusModal',formId:'refusForm',formHtml:_field('rfNom','Nom du patient*')+_field('rfPrenom','Prénom*')+_field('rfNaiss','Date de naissance','date')+_field('rfDate','Date du refus*','datetime-local')+_field('rfMotif','Motif du refus*','textarea')+_field('rfTemoin','Témoin (optionnel)')});}
 function openRefusModal(){document.getElementById('refusModal').style.display='flex';document.getElementById('rfDate').value=new Date().toISOString().slice(0,16);}
-async function saveRefus(){const p={created_by:_user.id,patient_nom:s(_val('rfNom')),patient_prenom:s(_val('rfPrenom')),date_naissance:_val('rfNaiss')||null,date_refus:_val('rfDate')||new Date().toISOString(),motif:s(_val('rfMotif')),temoin:s(_val('rfTemoin'))};if(!p.patient_nom||!p.motif){toast('Champs requis manquants','error');return;}const{error}=await sb.from('chlencodage_refus_soins').insert(p);if(error){toast('Erreur: '+error.message,'error');return;}_modalClose('refusModal');toast('✅ Refus enregistré','success');logAction('CREATE_REFUS','refus_soins',null,p);loadRefusSoins();}
+async function saveRefus(){const p={created_by:_user.id,patient_nom:s(_val('rfNom')),patient_prenom:s(_val('rfPrenom')),date_naissance:_val('rfNaiss')||null,date_refus:_val('rfDate')||new Date().toISOString(),motif:s(_val('rfMotif')),temoin:s(_val('rfTemoin'))};if(!p.patient_nom||!p.motif){toast('Champs requis manquants','error');return;}await _attachDossierIfMatch(p);const{error}=await sb.from('chlencodage_refus_soins').insert(p);if(error){toast('Erreur: '+error.message,'error');return;}_modalClose('refusModal');toast('✅ Refus enregistré','success');logAction('CREATE_REFUS','refus_soins',null,p);loadRefusSoins();}
 async function loadRefusSoins(){const{data}=await sb.from('chlencodage_refus_soins').select('*').order('created_at',{ascending:false}).limit(100);document.getElementById('refusList').innerHTML=_renderRows(data,[{key:'patient_nom',label:'Nom'},{key:'patient_prenom',label:'Prénom'},{key:'date_refus',label:'Date',fmt:fmtDateTime},{key:'motif',label:'Motif',fmt:function(v){return s(String(v||'').slice(0,80));}}],'Aucun refus enregistré');}
 
 function renderImpayes(){return _renderSimpleModule({title:'Impayés',icon:'💸',desc:'Suivi des factures non réglées.',openFn:'openImpayeModal',saveFn:'saveImpaye',listId:'impayesList',modalId:'impayeModal',formId:'impayeForm',formHtml:_field('imNom','Nom*')+_field('imPrenom','Prénom*')+_field('imMontant','Montant (€)*','number','step="0.01" min="0"')+_field('imRef','Référence facture')+_field('imDate','Date facture*','date')+_field('imNote','Notes','textarea')});}
 function openImpayeModal(){document.getElementById('impayeModal').style.display='flex';document.getElementById('imDate').value=new Date().toISOString().slice(0,10);}
-async function saveImpaye(){const p={created_by:_user.id,patient_nom:s(_val('imNom')),patient_prenom:s(_val('imPrenom')),montant:parseFloat(_val('imMontant'))||0,reference_facture:s(_val('imRef')),date_facture:_val('imDate')||null,notes:s(_val('imNote')),statut:'en_attente'};if(!p.patient_nom||!p.montant){toast('Champs requis manquants','error');return;}const{error}=await sb.from('chlencodage_impayes').insert(p);if(error){toast('Erreur: '+error.message,'error');return;}_modalClose('impayeModal');toast('✅ Impayé enregistré','success');logAction('CREATE_IMPAYE','impayes',null,p);loadImpayes();}
+async function saveImpaye(){const p={created_by:_user.id,patient_nom:s(_val('imNom')),patient_prenom:s(_val('imPrenom')),montant:parseFloat(_val('imMontant'))||0,reference_facture:s(_val('imRef')),date_facture:_val('imDate')||null,notes:s(_val('imNote')),statut:'en_attente'};if(!p.patient_nom||!p.montant){toast('Champs requis manquants','error');return;}await _attachDossierIfMatch(p);const{error}=await sb.from('chlencodage_impayes').insert(p);if(error){toast('Erreur: '+error.message,'error');return;}_modalClose('impayeModal');toast('✅ Impayé enregistré','success');logAction('CREATE_IMPAYE','impayes',null,p);loadImpayes();}
 async function loadImpayes(){const{data}=await sb.from('chlencodage_impayes').select('*').order('created_at',{ascending:false}).limit(100);document.getElementById('impayesList').innerHTML=_renderRows(data,[{key:'patient_nom',label:'Nom'},{key:'patient_prenom',label:'Prénom'},{key:'montant',label:'Montant',fmt:function(v){return'<strong style="color:var(--danger);">'+Number(v||0).toFixed(2)+' €</strong>';}},{key:'date_facture',label:'Date',fmt:fmtDate},{key:'statut',label:'Statut',fmt:function(v){return'<span class="badge badge-orange">'+s(v||'—')+'</span>';}}],'Aucun impayé');}
 
 function renderSoinsPolice(){return _renderSimpleModule({title:'Soins Police',icon:'🚔',desc:'Interventions sur réquisition policière.',openFn:'openSoinsPolModal',saveFn:'saveSoinsPol',listId:'soinsPolList',modalId:'soinsPolModal',formId:'soinsPolForm',formHtml:_field('spNom','Nom du patient*')+_field('spPrenom','Prénom*')+_field('spDate','Date*','datetime-local')+_field('spZone','Zone police')+_field('spReq','N° réquisition')+_field('spAgent','Agent requérant')+_field('spMotif','Motif intervention','textarea')});}
 function openSoinsPolModal(){document.getElementById('soinsPolModal').style.display='flex';document.getElementById('spDate').value=new Date().toISOString().slice(0,16);}
-async function saveSoinsPol(){const p={created_by:_user.id,patient_nom:s(_val('spNom')),patient_prenom:s(_val('spPrenom')),date_intervention:_val('spDate')||new Date().toISOString(),zone_police:s(_val('spZone')),numero_requisition:s(_val('spReq')),agent_requerant:s(_val('spAgent')),motif:s(_val('spMotif'))};if(!p.patient_nom){toast('Nom requis','error');return;}const{error}=await sb.from('chlencodage_soins_police').insert(p);if(error){toast('Erreur: '+error.message,'error');return;}_modalClose('soinsPolModal');toast('✅ Enregistré','success');logAction('CREATE_SOINS_POL','soins_police',null,p);loadSoinsPolice();}
+async function saveSoinsPol(){const p={created_by:_user.id,patient_nom:s(_val('spNom')),patient_prenom:s(_val('spPrenom')),date_intervention:_val('spDate')||new Date().toISOString(),zone_police:s(_val('spZone')),numero_requisition:s(_val('spReq')),agent_requerant:s(_val('spAgent')),motif:s(_val('spMotif'))};if(!p.patient_nom){toast('Nom requis','error');return;}await _attachDossierIfMatch(p);const{error}=await sb.from('chlencodage_soins_police').insert(p);if(error){toast('Erreur: '+error.message,'error');return;}_modalClose('soinsPolModal');toast('✅ Enregistré','success');logAction('CREATE_SOINS_POL','soins_police',null,p);loadSoinsPolice();}
 async function loadSoinsPolice(){const{data}=await sb.from('chlencodage_soins_police').select('*').order('created_at',{ascending:false}).limit(100);document.getElementById('soinsPolList').innerHTML=_renderRows(data,[{key:'patient_nom',label:'Nom'},{key:'patient_prenom',label:'Prénom'},{key:'date_intervention',label:'Date',fmt:fmtDateTime},{key:'zone_police',label:'Zone'},{key:'numero_requisition',label:'Réquisition'}],'Aucune intervention');}
 
 function renderMortuaire(){return _renderSimpleModule({title:'Mortuaire',icon:'⚰️',desc:'Registre mortuaire.',openFn:'openMortModal',saveFn:'saveMort',listId:'mortList',modalId:'mortModal',formId:'mortForm',formHtml:_field('mtNom','Nom*')+_field('mtPrenom','Prénom*')+_field('mtNaiss','Date de naissance','date')+_field('mtDeces','Date du décès*','datetime-local')+_field('mtCause','Cause présumée')+_field('mtMedecin','Médecin constatant')+_field('mtNotes','Notes','textarea')});}
 function openMortModal(){document.getElementById('mortModal').style.display='flex';document.getElementById('mtDeces').value=new Date().toISOString().slice(0,16);}
-async function saveMort(){const p={created_by:_user.id,patient_nom:s(_val('mtNom')),patient_prenom:s(_val('mtPrenom')),date_naissance:_val('mtNaiss')||null,date_deces:_val('mtDeces')||new Date().toISOString(),cause:s(_val('mtCause')),medecin:s(_val('mtMedecin')),notes:s(_val('mtNotes'))};if(!p.patient_nom){toast('Nom requis','error');return;}const{error}=await sb.from('chlencodage_mortuaire').insert(p);if(error){toast('Erreur: '+error.message,'error');return;}_modalClose('mortModal');toast('✅ Enregistré','success');logAction('CREATE_MORTUAIRE','mortuaire',null,p);loadMortuaire();}
+async function saveMort(){const p={created_by:_user.id,patient_nom:s(_val('mtNom')),patient_prenom:s(_val('mtPrenom')),date_naissance:_val('mtNaiss')||null,date_deces:_val('mtDeces')||new Date().toISOString(),cause:s(_val('mtCause')),medecin:s(_val('mtMedecin')),notes:s(_val('mtNotes'))};if(!p.patient_nom){toast('Nom requis','error');return;}await _attachDossierIfMatch(p);const{error}=await sb.from('chlencodage_mortuaire').insert(p);if(error){toast('Erreur: '+error.message,'error');return;}_modalClose('mortModal');toast('✅ Enregistré','success');logAction('CREATE_MORTUAIRE','mortuaire',null,p);loadMortuaire();}
 async function loadMortuaire(){const{data}=await sb.from('chlencodage_mortuaire').select('*').order('created_at',{ascending:false}).limit(100);document.getElementById('mortList').innerHTML=_renderRows(data,[{key:'patient_nom',label:'Nom'},{key:'patient_prenom',label:'Prénom'},{key:'date_deces',label:'Décès',fmt:fmtDateTime},{key:'cause',label:'Cause'},{key:'medecin',label:'Médecin'}],'Aucun enregistrement');}
 
 function renderCertificats(){return _renderSimpleModule({title:'Certificats d\'invalidation de travail',icon:'📄',desc:'Certificats médicaux d\'incapacité.',openFn:'openCertModal',saveFn:'saveCert',listId:'certList',modalId:'certModal',formId:'certForm',formHtml:_field('ctNom','Nom*')+_field('ctPrenom','Prénom*')+_field('ctDateDeb','Début incapacité*','date')+_field('ctDateFin','Fin incapacité*','date')+_field('ctMotif','Motif*','textarea')+_field('ctMedecin','Médecin signataire')+_field('ctInami','N° INAMI')});}
 function openCertModal(){document.getElementById('certModal').style.display='flex';document.getElementById('ctDateDeb').value=new Date().toISOString().slice(0,10);}
-async function saveCert(){const p={created_by:_user.id,patient_nom:s(_val('ctNom')),patient_prenom:s(_val('ctPrenom')),date_debut:_val('ctDateDeb')||null,date_fin:_val('ctDateFin')||null,motif:s(_val('ctMotif')),medecin:s(_val('ctMedecin')),numero_inami:s(_val('ctInami'))};if(!p.patient_nom||!p.date_debut||!p.date_fin){toast('Champs requis manquants','error');return;}const{error}=await sb.from('chlencodage_certificats_travail').insert(p);if(error){toast('Erreur: '+error.message,'error');return;}_modalClose('certModal');toast('✅ Certificat enregistré','success');logAction('CREATE_CERT','certificats_travail',null,p);loadCertificats();}
+async function saveCert(){const p={created_by:_user.id,patient_nom:s(_val('ctNom')),patient_prenom:s(_val('ctPrenom')),date_debut:_val('ctDateDeb')||null,date_fin:_val('ctDateFin')||null,motif:s(_val('ctMotif')),medecin:s(_val('ctMedecin')),numero_inami:s(_val('ctInami'))};if(!p.patient_nom||!p.date_debut||!p.date_fin){toast('Champs requis manquants','error');return;}await _attachDossierIfMatch(p);const{error}=await sb.from('chlencodage_certificats_travail').insert(p);if(error){toast('Erreur: '+error.message,'error');return;}_modalClose('certModal');toast('✅ Certificat enregistré','success');logAction('CREATE_CERT','certificats_travail',null,p);loadCertificats();}
 async function loadCertificats(){const{data}=await sb.from('chlencodage_certificats_travail').select('*').order('created_at',{ascending:false}).limit(100);document.getElementById('certList').innerHTML=_renderRows(data,[{key:'patient_nom',label:'Nom'},{key:'patient_prenom',label:'Prénom'},{key:'date_debut',label:'Début',fmt:fmtDate},{key:'date_fin',label:'Fin',fmt:fmtDate},{key:'medecin',label:'Médecin'}],'Aucun certificat');}
 
 // ================================================
@@ -1609,9 +1609,12 @@ async function showDossierDetail(id){
   const stMap={brouillon:'badge-blue',soumis:'badge-orange',valide:'badge-green',refuse:'badge-red'};
   const ca=document.getElementById('contentArea');
   document.getElementById('pageTitle').textContent='Dossier — '+s(d.nom)+' '+s(d.prenom);
+  const rel=await _loadDossierRelated(id,d.nom,d.prenom);
   ca.innerHTML=''
    +'<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;"><button class="btn btn-ghost" onclick="_currentDossier=null;navigateTo(\'dossiers\')">↩ Retour aux dossiers</button>'
-   +'<button class="btn btn-danger" onclick="deleteDossier(\''+d.id+'\')">🗑️ Supprimer le dossier</button></div>'
+   +'<button class="btn btn-primary" onclick="openExamenModal()">🔬 Ajouter un examen</button>'
+   +'<button class="btn btn-cyan" onclick="navigateTo(\'fiche-create\')">➕ Ajouter une fiche médicale</button>'
+   +'<button class="btn btn-danger" style="margin-left:auto;" onclick="deleteDossier(\''+d.id+'\')">🗑️ Supprimer le dossier</button></div>'
    +'<div class="card" style="padding:22px;margin-bottom:18px;">'
    +'<h2 style="margin:0 0 12px;color:var(--navy);">👤 '+s(d.nom)+' '+s(d.prenom)+'</h2>'
    +'<div class="modal-grid">'
@@ -1621,16 +1624,45 @@ async function showDossierDetail(id){
    +'<div class="modal-field"><div class="lbl">Situation familiale</div><div class="val">'+s(d.situation_familiale||'—')+'</div></div>'
    +'<div class="modal-field"><div class="lbl">Créé le</div><div class="val">'+s(fmtDateTime(d.created_at))+'</div></div>'
    +'</div></div>'
+   // Examens section
    +'<div class="card" style="padding:18px;">'
    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">'
+   +'<h3 style="margin:0;color:var(--navy);">🔬 Examens <span style="font-size:.7em;color:var(--text3);">('+(rel.examens.length)+')</span></h3>'
+   +'<button class="btn btn-sm btn-primary" onclick="openExamenModal()">➕ Ajouter</button>'
+   +'</div>'
+   +(rel.examens.length
+     ? '<div style="display:flex;flex-direction:column;gap:8px;">'+rel.examens.map(function(e){
+         const img=e.image_url?'<a href="javascript:void(0)" onclick="openExamenViewer(\''+e.image_url+'\')" style="margin-left:8px;">🖼️ Voir</a>':'';
+         return '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:var(--bg2);border-radius:var(--radius-sm);">'
+           +(e.image_url?'<img src="'+e.image_url+'" style="width:60px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="openExamenViewer(\''+e.image_url+'\')" onerror="this.style.display=\'none\'">':'<div style="width:60px;height:60px;background:var(--bg);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.6em;">📄</div>')
+           +'<div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span class="badge badge-blue">'+s(e.type_examen||'—')+'</span><strong>'+s(e.titre||'Sans titre')+'</strong>'+img+'</div>'
+           +'<div style="font-size:.78em;color:var(--text3);margin-top:3px;">'+s(e.date_examen?fmtDateTime(e.date_examen):fmtDateTime(e.created_at))+'</div>'
+           +(e.description?'<div style="font-size:.85em;color:var(--text2);margin-top:6px;white-space:pre-wrap;">'+s(e.description)+'</div>':'')
+           +'</div>'
+           +'<button class="btn btn-sm btn-danger" onclick="deleteExamen(\''+e.id+'\',\''+(e.image_path||'')+'\')">🗑️</button>'
+           +'</div>';
+       }).join('')+'</div>'
+     : '<div class="empty-state" style="padding:20px;"><div class="es-icon">🔬</div><p>Aucun examen. Cliquez sur « Ajouter ».</p></div>')
+   +'</div>'
+   // Fiches médicales section
+   +'<div class="card" style="padding:18px;margin-top:14px;">'
+   +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">'
    +'<h3 style="margin:0;color:var(--navy);">📋 Fiches médicales du dossier</h3>'
-   +'<button class="btn btn-primary" onclick="navigateTo(\'fiche-create\')">➕ Ajouter une fiche</button>'
+   +'<button class="btn btn-sm btn-cyan" onclick="navigateTo(\'fiche-create\')">➕ Ajouter une fiche</button>'
    +'</div>'
    +((fiches&&fiches.length)
      ? '<div style="display:flex;flex-direction:column;gap:8px;">'+fiches.map(f=>'<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg2);border-radius:var(--radius-sm);"><span class="badge '+(stMap[f.statut]||'')+'">'+s(f.statut||'')+'</span>'+(f.urgence?'<span class="badge badge-red">'+s(f.urgence)+'</span>':'')+'<span style="font-size:.85em;color:var(--text2);">'+fmtDateTime(f.created_at)+'</span><button class="btn btn-sm btn-cyan" style="margin-left:auto;" onclick="viewFiche(\''+f.id+'\')">👁️ Voir</button></div>').join('')+'</div>'
-     : '<div class="empty-state" style="padding:24px;"><div class="es-icon">📋</div><p>Aucune fiche médicale. Cliquez sur « Ajouter une fiche ».</p></div>')
-   +'</div>';
+     : '<div class="empty-state" style="padding:24px;"><div class="es-icon">📋</div><p>Aucune fiche médicale.</p></div>')
+   +'</div>'
+   // Related modules (auto-linked by dossier_id or by name match)
+   +_renderRelatedBlock('Impayés','💸',rel.impayes,function(r){return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border-radius:var(--radius-sm);"><strong style="color:var(--danger);">'+Number(r.montant||0).toFixed(2)+' €</strong><span class="badge badge-orange">'+s(r.statut||'')+'</span><span style="font-size:.8em;color:var(--text3);">'+s(r.date_facture?fmtDate(r.date_facture):'')+'</span>'+_relRowBase(r)+'</div>';})
+   +_renderRelatedBlock('Refus de soins','🚫',rel.refus,function(r){return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border-radius:var(--radius-sm);"><span style="font-size:.8em;color:var(--text3);">'+s(r.date_refus?fmtDateTime(r.date_refus):'')+'</span><span style="flex:1;font-size:.85em;">'+s(String(r.motif||'').slice(0,120))+'</span>'+_relRowBase(r)+'</div>';})
+   +_renderRelatedBlock('Soins Police','🚔',rel.soins,function(r){return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border-radius:var(--radius-sm);"><span style="font-size:.8em;color:var(--text3);">'+s(r.date_intervention?fmtDateTime(r.date_intervention):'')+'</span><span>'+s(r.zone_police||'')+'</span><span style="font-size:.8em;color:var(--text2);">'+s(r.numero_requisition||'')+'</span>'+_relRowBase(r)+'</div>';})
+   +_renderRelatedBlock('Mortuaire','⚰️',rel.mort,function(r){return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border-radius:var(--radius-sm);"><span style="font-size:.8em;color:var(--text3);">'+s(r.date_deces?fmtDateTime(r.date_deces):'')+'</span><span style="font-size:.85em;">'+s(r.cause||'')+'</span>'+_relRowBase(r)+'</div>';})
+   +_renderRelatedBlock('Certificats de travail','📄',rel.cert,function(r){return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border-radius:var(--radius-sm);"><span style="font-size:.8em;color:var(--text3);">'+s(r.date_debut?fmtDate(r.date_debut):'')+' → '+s(r.date_fin?fmtDate(r.date_fin):'')+'</span><span style="flex:1;font-size:.85em;">'+s(String(r.motif||'').slice(0,120))+'</span>'+_relRowBase(r)+'</div>';})
+   ;
 }
+
 async function deleteDossier(id){
   if(!confirm('Supprimer ce dossier ?\nLes fiches associées seront détachées (non supprimées).'))return;
   const{error}=await sb.from('chlencodage_dossiers_patients').delete().eq('id',id);
@@ -1651,6 +1683,133 @@ function prefillFromDossier(){
     ca.insertBefore(hint,ca.firstChild);
   }
 }
+
+
+// ================================================
+// EXAMENS + LIAISON DOSSIER (auto-match nom/prénom)
+// ================================================
+const EXAMEN_TYPES=['Prise de sang','Radio','IRM','Scanner','Échographie','Rendez-vous médical','Consultation spécialiste','Ordonnance','Compte-rendu','Autre'];
+const STORAGE_BUCKET='dossier-images';
+
+async function _findDossierIdByName(nom,prenom){
+  if(!nom)return null;
+  const n=String(nom).trim();const p=String(prenom||'').trim();
+  if(!n)return null;
+  let q=sb.from('chlencodage_dossiers_patients').select('id').ilike('nom',n);
+  if(p)q=q.ilike('prenom',p);
+  const{data}=await q.limit(1);
+  return(data&&data[0])?data[0].id:null;
+}
+async function _attachDossierIfMatch(p){
+  try{
+    if(p.dossier_id)return;
+    const did=await _findDossierIdByName(p.patient_nom,p.patient_prenom);
+    if(did)p.dossier_id=did;
+  }catch(e){console.warn('attach dossier failed',e);}
+}
+
+function openExamenModal(){
+  if(!_currentDossier){toast('Ouvrez un dossier d\'abord','error');return;}
+  const opts=EXAMEN_TYPES.map(t=>'<option value="'+s(t)+'">'+s(t)+'</option>').join('');
+  let modal=document.getElementById('examenModal');
+  if(!modal){
+    modal=document.createElement('div');modal.id='examenModal';modal.className='modal-overlay';modal.style.display='none';
+    modal.onclick=function(e){if(e.target===modal)modal.style.display='none';};
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML='<div class="modal-box" style="max-width:640px;"><div class="modal-head"><h2>🔬 Nouvel examen</h2><button class="modal-close" onclick="document.getElementById(\'examenModal\').style.display=\'none\'">×</button></div>'
+   +'<div class="modal-body"><form id="examenForm" onsubmit="event.preventDefault();saveExamen();">'
+   +'<div class="form-group"><label>Type d\'examen *</label><select id="exType" class="input">'+opts+'</select></div>'
+   +'<div class="form-group"><label>Titre / Intitulé</label><input type="text" id="exTitre" class="input" maxlength="200" placeholder="Ex : Bilan sanguin complet"></div>'
+   +'<div class="form-group"><label>Date</label><input type="datetime-local" id="exDate" class="input"></div>'
+   +'<div class="form-group"><label>Description / Résultat</label><textarea id="exDesc" rows="4" maxlength="2000" placeholder="Détails, résultats, remarques…"></textarea></div>'
+   +'<div class="form-group"><label>Image (optionnel) — JPG/PNG/PDF</label><input type="file" id="exFile" accept="image/*,application/pdf"></div>'
+   +'<div id="exUploadStatus" style="font-size:.85em;color:var(--text2);"></div>'
+   +'<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;"><button type="button" class="btn btn-ghost" onclick="document.getElementById(\'examenModal\').style.display=\'none\'">Annuler</button>'
+   +'<button type="submit" class="btn btn-cyan" id="exSubmitBtn">💾 Enregistrer</button></div></form></div></div>';
+  document.getElementById('exDate').value=new Date().toISOString().slice(0,16);
+  modal.style.display='flex';
+}
+
+async function saveExamen(){
+  if(!_user||!_currentDossier)return;
+  const type=document.getElementById('exType').value;
+  const titre=document.getElementById('exTitre').value.trim();
+  const date=document.getElementById('exDate').value||null;
+  const desc=document.getElementById('exDesc').value.trim();
+  const fileInput=document.getElementById('exFile');
+  const file=fileInput&&fileInput.files&&fileInput.files[0];
+  const btn=document.getElementById('exSubmitBtn');btn.disabled=true;btn.textContent='⏳ Enregistrement…';
+  let image_url=null,image_path=null;
+  if(file){
+    if(file.size>10*1024*1024){toast('Fichier > 10 Mo','error');btn.disabled=false;btn.textContent='💾 Enregistrer';return;}
+    const ext=(file.name.split('.').pop()||'bin').toLowerCase();
+    const path=_currentDossier.id+'/'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
+    document.getElementById('exUploadStatus').textContent='⏳ Upload du fichier…';
+    const{error:upErr}=await sb.storage.from(STORAGE_BUCKET).upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type||undefined});
+    if(upErr){toast('Erreur upload : '+upErr.message,'error');btn.disabled=false;btn.textContent='💾 Enregistrer';return;}
+    image_path=path;
+    const{data:pub}=sb.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+    image_url=pub&&pub.publicUrl||null;
+  }
+  const row={dossier_id:_currentDossier.id,created_by:_user.id,type_examen:type,titre:titre||null,date_examen:date,description:desc||null,image_url,image_path};
+  const{error}=await sb.from('chlencodage_examens').insert(row);
+  if(error){toast('Erreur: '+error.message,'error');btn.disabled=false;btn.textContent='💾 Enregistrer';return;}
+  toast('✅ Examen ajouté','success');
+  logAction&&logAction('CREATE_EXAMEN','examens',null,{type,dossier:_currentDossier.id});
+  document.getElementById('examenModal').style.display='none';
+  showDossierDetail(_currentDossier.id);
+}
+
+async function deleteExamen(id,imagePath){
+  if(!confirm('Supprimer cet examen ?'))return;
+  if(imagePath){try{await sb.storage.from(STORAGE_BUCKET).remove([imagePath]);}catch(e){}}
+  const{error}=await sb.from('chlencodage_examens').delete().eq('id',id);
+  if(error){toast('Erreur: '+error.message,'error');return;}
+  toast('🗑️ Supprimé','success');showDossierDetail(_currentDossier.id);
+}
+
+function openExamenViewer(url){
+  if(!url)return;
+  window.open(url,'_blank','noopener,noreferrer');
+}
+
+async function _loadDossierRelated(dossierId,nom,prenom){
+  const n=(nom||'').trim();const p=(prenom||'').trim();
+  // Helper that runs an .or() match on dossier_id OR name match
+  async function q(table,extraCols){
+    const cols='id,dossier_id,patient_nom,patient_prenom,created_at'+(extraCols?','+extraCols:'');
+    let res=await sb.from(table).select(cols).eq('dossier_id',dossierId);
+    let rows=res.data||[];
+    // Also pick up legacy rows by name match (not yet linked)
+    if(n){
+      let q2=sb.from(table).select(cols).is('dossier_id',null).ilike('patient_nom',n);
+      if(p)q2=q2.ilike('patient_prenom',p);
+      const r2=await q2;rows=rows.concat(r2.data||[]);
+    }
+    return rows;
+  }
+  const[examens,impayes,refus,soins,mort,cert]=await Promise.all([
+    sb.from('chlencodage_examens').select('*').eq('dossier_id',dossierId).order('created_at',{ascending:false}),
+    q('chlencodage_impayes','montant,date_facture,statut'),
+    q('chlencodage_refus_soins','date_refus,motif'),
+    q('chlencodage_soins_police','date_intervention,zone_police,numero_requisition'),
+    q('chlencodage_mortuaire','date_deces,cause'),
+    q('chlencodage_certificats_travail','date_debut,date_fin,motif'),
+  ]);
+  return{examens:examens.data||[],impayes,refus,soins,mort,cert};
+}
+
+function _renderRelatedBlock(title,icon,rows,renderRow,emptyMsg){
+  if(!rows||!rows.length)return'';
+  return '<div class="card" style="padding:16px;margin-top:14px;"><h3 style="margin:0 0 10px;color:var(--navy);">'+icon+' '+s(title)+' <span style="font-size:.7em;color:var(--text3);">('+rows.length+')</span></h3>'
+    +'<div style="display:flex;flex-direction:column;gap:6px;">'+rows.map(renderRow).join('')+'</div></div>';
+}
+
+function _relRowBase(r){
+  return r.dossier_id?'':'<span class="badge badge-orange" title="Lié par correspondance nom/prénom">~ auto</span>';
+}
+
 
 // ================================================
 // COMPTE
