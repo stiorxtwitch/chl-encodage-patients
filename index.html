@@ -415,7 +415,7 @@ input[type="checkbox"],input[type="radio"]{width:17px;height:17px;accent-color:v
     <nav class="sidebar-nav" id="sidebarNav">
       <div class="nav-section-label">Principal</div>
       <div class="nav-item active" data-view="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Tableau de bord</span></div>
-      <div class="nav-item" data-view="patients"><span class="nav-icon">📋</span><span class="nav-label">Encodage Patient</span></div>
+      <div class="nav-item" data-view="patients"><span class="nav-icon">🆕</span><span class="nav-label">Nouveau Dossier</span></div>
       <div class="nav-item" data-view="fiches-list"><span class="nav-icon">📁</span><span class="nav-label">Mes Fiches</span><span class="nav-badge" id="pendingBadge" style="display:none;">0</span></div>
       <div class="nav-item" data-view="dossiers"><span class="nav-icon">🗂️</span><span class="nav-label">Dossiers Médicaux</span></div>
       <div class="nav-divider"></div>
@@ -579,7 +579,7 @@ function hideInactOverlay(){document.getElementById('inactivityOverlay').classLi
 function resetInactivity(){if(!_user)return;hideInactOverlay();startInactivity();}
 function stopInactivity(){clearTimeout(_inactTimer);clearTimeout(_inactWarnTimer);clearInterval(_inactWarnInterval);clearInterval(_inactBarInterval);hideInactOverlay();}
 // ROUTER
-const PAGE_TITLES={dashboard:'Tableau de bord',patients:'Encodage Patient','fiches-list':'Mes Fiches',dossiers:'Dossiers Médicaux','refus-soins':'Refus de Soins',impayes:'Impayés','soins-police':'Soins Police',mortuaire:'Mortuaire',certificats:'Certificats de Travail','prise-service':'Prise de Service',pathologies:'Pathologies',protocoles:'Protocoles de Soins',tarifs:'Tarifs',compte:'Mon Compte',logs:"Logs d'Activité",admin:'Administration','medical-form':'Fiche Médicale'};
+const PAGE_TITLES={dashboard:'Tableau de bord',patients:'Nouveau Dossier Patient','fiche-create':'Ajouter une Fiche Médicale','fiches-list':'Mes Fiches',dossiers:'Dossiers Médicaux','refus-soins':'Refus de Soins',impayes:'Impayés','soins-police':'Soins Police',mortuaire:'Mortuaire',certificats:'Certificats de Travail','prise-service':'Prise de Service',pathologies:'Pathologies',protocoles:'Protocoles de Soins',tarifs:'Tarifs',compte:'Mon Compte',logs:"Logs d'Activité",admin:'Administration','medical-form':'Fiche Médicale'};
 let _currentView='';
 function navigateTo(view){
   _currentView=view;document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.view===view));
@@ -594,7 +594,8 @@ function renderView(v){
   const ca=document.getElementById('contentArea');
   switch(v){
     case 'dashboard':    ca.innerHTML=renderDashboard();loadDashboardStats();break;
-    case 'patients':     ca.innerHTML=renderPatientForm();initPatientForm();break;
+    case 'patients':     ca.innerHTML=renderDossierForm();break;
+    case 'fiche-create':  ca.innerHTML=renderPatientForm();initPatientForm();prefillFromDossier();break;
     case 'fiches-list':  ca.innerHTML=renderFichesList();loadFichesList();break;
     case 'dossiers':     ca.innerHTML=renderDossiers();loadDossiers();break;
     case 'refus-soins':  ca.innerHTML=renderRefusSoins();loadRefusSoins();break;
@@ -634,7 +635,7 @@ function renderDashboard(){return`
     <div class="section-card">
       <div class="section-head" style="background:linear-gradient(135deg,#f59e0b,#d97706);">⚡ Accès rapide</div>
       <div class="section-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <button class="btn btn-primary btn-lg" onclick="navigateTo('patients')" style="justify-content:center;">📋 Nouvelle Fiche</button>
+        <button class="btn btn-primary btn-lg" onclick="navigateTo('patients')" style="justify-content:center;">🆕 Nouveau Dossier</button>
         <button class="btn btn-cyan btn-lg" onclick="navigateTo('refus-soins')" style="justify-content:center;">🚫 Refus de Soins</button>
         <button class="btn btn-outline btn-lg" onclick="navigateTo('impayes')" style="justify-content:center;">💸 Impayés</button>
         <button class="btn btn-outline btn-lg" onclick="navigateTo('mortuaire')" style="justify-content:center;">⚰️ Mortuaire</button>
@@ -851,6 +852,7 @@ async function saveFiche(){
   if(!data.patient_nom&&!data.patient_prenom){toast('Veuillez renseigner le nom ou prénom du patient','error');return;}
   const soignants=data.soignants;delete data.soignants;
   const ficheRow={user_id:_user.id,statut:'brouillon',...data};delete ficheRow.soignants;
+  if(_currentDossier&&_currentDossier.id)ficheRow.dossier_id=_currentDossier.id;
   Object.keys(ficheRow).forEach(k=>{if(ficheRow[k]===undefined)delete ficheRow[k];});
   const{data:fiche,error}=await sb.from('chlencodage_fiches_patients').insert(ficheRow).select('id').single();
   if(error){toast('Erreur: '+error.message,'error');return;}
@@ -1038,7 +1040,7 @@ function renderFichesList(){
       <select id="ficheStatutFilter" onchange="loadFichesList()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--card);font-size:.88em;">
         <option value="">Tous statuts</option><option value="brouillon">Brouillon</option><option value="soumis">Soumis</option><option value="valide">Validé</option><option value="refuse">Refusé</option>
       </select>
-      <button class="btn btn-primary" onclick="navigateTo('patients')">+ Nouvelle Fiche</button>
+      <button class="btn btn-primary" onclick="navigateTo('dossiers')">+ Ouvrir un Dossier</button>
     </div></div>
   <div id="fichesListContainer"></div>`;}
 let _fichesCache=[];
@@ -1530,23 +1532,124 @@ function renderDossiers(){
 }
 let _dossiersCache=[];
 async function loadDossiers(){
-  const{data,error}=await sb.from('chlencodage_fiches_patients').select('id,patient_nom,patient_prenom,date_naissance,statut,created_at,urgence').order('patient_nom',{ascending:true}).limit(500);
+  const{data,error}=await sb.from('chlencodage_dossiers_patients').select('*').order('nom',{ascending:true}).limit(1000);
   if(error){document.getElementById('dossierList').innerHTML='<div class="empty-state"><div class="es-icon">⚠️</div><p>Erreur: '+s(error.message)+'</p></div>';return;}
-  const groups={};
-  (data||[]).forEach(function(f){const k=(f.patient_nom||'?').toUpperCase()+'|'+(f.patient_prenom||'').toUpperCase();if(!groups[k])groups[k]={nom:f.patient_nom,prenom:f.patient_prenom,date_naissance:f.date_naissance,fiches:[]};groups[k].fiches.push(f);});
-  _dossiersCache=Object.values(groups);renderDossiersList(_dossiersCache);
+  // Fetch fiches counts per dossier in batch
+  const ids=(data||[]).map(d=>d.id);
+  const counts={};
+  if(ids.length){
+    const{data:fc}=await sb.from('chlencodage_fiches_patients').select('dossier_id').in('dossier_id',ids);
+    (fc||[]).forEach(f=>{if(f.dossier_id)counts[f.dossier_id]=(counts[f.dossier_id]||0)+1;});
+  }
+  _dossiersCache=(data||[]).map(d=>({...d,fichesCount:counts[d.id]||0}));
+  renderDossiersList(_dossiersCache);
 }
-function filterDossiers(){const q=(document.getElementById('dossierSearch')?.value||'').toLowerCase().trim();const filtered=q?_dossiersCache.filter(function(g){return((g.nom||'')+' '+(g.prenom||'')).toLowerCase().includes(q);}):_dossiersCache;renderDossiersList(filtered);}
-function renderDossiersList(groups){
+function filterDossiers(){const q=(document.getElementById('dossierSearch')?.value||'').toLowerCase().trim();const filtered=q?_dossiersCache.filter(d=>((d.nom||'')+' '+(d.prenom||'')).toLowerCase().includes(q)):_dossiersCache;renderDossiersList(filtered);}
+function renderDossiersList(items){
   const el=document.getElementById('dossierList');
-  if(!groups.length){el.innerHTML='<div class="empty-state"><div class="es-icon">🗂️</div><p>Aucun dossier</p></div>';return;}
+  if(!items.length){el.innerHTML='<div class="empty-state"><div class="es-icon">🗂️</div><p>Aucun dossier. <button class="btn btn-sm btn-cyan" style="margin-left:8px;" onclick="navigateTo(\'patients\')">+ Créer</button></p></div>';return;}
+  el.innerHTML='<div style="display:flex;flex-direction:column;gap:8px;">'+items.map(d=>''
+    +'<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--bg2);border-radius:var(--radius-sm);flex-wrap:wrap;">'
+    +'<div style="flex:1;min-width:200px;"><strong style="color:var(--navy);font-size:1.05em;">'+s(d.nom||'?')+' '+s(d.prenom||'')+'</strong>'
+    +'<div style="font-size:.78em;color:var(--text3);margin-top:2px;">'+(d.date_naissance?'né(e) le '+fmtDate(d.date_naissance):'—')+(d.groupe_sanguin?' · 🩸 '+s(d.groupe_sanguin):'')+(d.telephone?' · 📞 '+s(d.telephone):'')+'</div></div>'
+    +'<span style="font-size:.78em;background:var(--navy);color:#fff;padding:4px 10px;border-radius:10px;">'+d.fichesCount+' fiche(s)</span>'
+    +'<button class="btn btn-sm btn-cyan" onclick="showDossierDetail(\''+d.id+'\')">📂 Ouvrir</button>'
+    +'</div>').join('')+'</div>';
+}
+
+// ================================================
+// NEW: DOSSIER (PATIENT) — mini form + viewer
+// ================================================
+let _currentDossier=null; // {id,nom,prenom,date_naissance,telephone,groupe_sanguin,situation_familiale}
+
+function renderDossierForm(){
+  return ''
+  +'<div class="card" style="max-width:760px;margin:0 auto;padding:26px;">'
+  +'<h2 style="margin:0 0 6px;color:var(--navy);">🆕 Nouveau Dossier Patient</h2>'
+  +'<p style="margin:0 0 22px;color:var(--text2);font-size:.9em;">Créez un dossier patient minimal. Vous pourrez ensuite y ajouter des fiches médicales.</p>'
+  +'<div class="form-row"><div class="form-group"><label>NOM *</label><input type="text" id="dNom" class="input" maxlength="100"></div>'
+  +'<div class="form-group"><label>PRÉNOM *</label><input type="text" id="dPrenom" class="input" maxlength="100"></div></div>'
+  +'<div class="form-row"><div class="form-group"><label>Date de naissance *</label><input type="date" id="dDob" class="input"></div>'
+  +'<div class="form-group sm"><label>Téléphone (optionnel)</label><input type="tel" id="dTel" class="input" maxlength="20"></div></div>'
+  +'<div class="form-row"><div class="form-group sm"><label>Groupe sanguin</label>'
+  +'<select id="dGs" class="input"><option value="">—</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option><option>Inconnu</option></select></div>'
+  +'<div class="form-group"><label>Situation familiale</label>'
+  +'<select id="dSf" class="input"><option value="">—</option><option>Célibataire</option><option>Marié(e)</option><option>Pacsé(e)</option><option>Divorcé(e)</option><option>Veuf(ve)</option><option>En couple</option></select></div></div>'
+  +'<div style="display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;">'
+  +'<button class="btn btn-primary btn-lg" onclick="saveDossier()">✅ Créer le dossier</button>'
+  +'<button class="btn btn-ghost btn-lg" onclick="navigateTo(\'dossiers\')">↩ Voir les dossiers</button>'
+  +'</div></div>';
+}
+async function saveDossier(){
+  if(!_user)return;
+  const nom=document.getElementById('dNom').value.trim();
+  const prenom=document.getElementById('dPrenom').value.trim();
+  const dob=document.getElementById('dDob').value||null;
+  const tel=document.getElementById('dTel').value.trim()||null;
+  const gs=document.getElementById('dGs').value||null;
+  const sf=document.getElementById('dSf').value||null;
+  if(!nom||!prenom||!dob){toast('Nom, prénom et date de naissance sont requis','error');return;}
+  const row={user_id:_user.id,nom,prenom,date_naissance:dob,telephone:tel,groupe_sanguin:gs,situation_familiale:sf};
+  const{data,error}=await sb.from('chlencodage_dossiers_patients').insert(row).select('*').single();
+  if(error){toast('Erreur: '+error.message,'error');return;}
+  toast('✅ Dossier créé','success');
+  logAction&&logAction('CREATE_DOSSIER','dossiers',data.id,{patient:nom+' '+prenom});
+  openDossier(data);
+}
+async function openDossier(d){
+  _currentDossier=d;
+  navigateTo('dossiers');
+  setTimeout(()=>showDossierDetail(d.id),50);
+}
+async function showDossierDetail(id){
+  const{data:d}=await sb.from('chlencodage_dossiers_patients').select('*').eq('id',id).single();
+  if(!d){toast('Dossier introuvable','error');return;}
+  _currentDossier=d;
+  const{data:fiches}=await sb.from('chlencodage_fiches_patients').select('id,statut,urgence,created_at,patient_nom,patient_prenom').eq('dossier_id',id).order('created_at',{ascending:false});
   const stMap={brouillon:'badge-blue',soumis:'badge-orange',valide:'badge-green',refuse:'badge-red'};
-  el.innerHTML=groups.map(function(g){
-    const fiches=g.fiches.sort(function(a,b){return(b.created_at||'').localeCompare(a.created_at||'');});
-    return'<details style="border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px;padding:12px 16px;background:var(--bg2);"><summary style="cursor:pointer;display:flex;align-items:center;gap:12px;flex-wrap:wrap;"><strong style="color:var(--navy);font-size:1.05em;">'+s(g.nom||'?')+' '+s(g.prenom||'')+'</strong><span style="font-size:.78em;color:var(--text3);">'+(g.date_naissance?'né(e) le '+fmtDate(g.date_naissance):'')+'</span><span style="margin-left:auto;font-size:.78em;background:var(--navy);color:#fff;padding:3px 10px;border-radius:10px;">'+fiches.length+' fiche(s)</span></summary><div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;">'
-      +fiches.map(function(f){return'<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#fff;border-radius:var(--radius-sm);"><span class="badge '+(stMap[f.statut]||'')+'">'+s(f.statut||'')+'</span>'+(f.urgence?'<span class="badge badge-red">'+s(f.urgence)+'</span>':'')+'<span style="font-size:.85em;color:var(--text2);">'+fmtDateTime(f.created_at)+'</span><button class="btn btn-sm btn-cyan" style="margin-left:auto;" onclick="viewFiche(\''+f.id+'\')">👁️ Voir</button></div>';}).join('')
-      +'</div></details>';
-  }).join('');
+  const ca=document.getElementById('contentArea');
+  document.getElementById('pageTitle').textContent='Dossier — '+s(d.nom)+' '+s(d.prenom);
+  ca.innerHTML=''
+   +'<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;"><button class="btn btn-ghost" onclick="_currentDossier=null;navigateTo(\'dossiers\')">↩ Retour aux dossiers</button>'
+   +'<button class="btn btn-danger" onclick="deleteDossier(\''+d.id+'\')">🗑️ Supprimer le dossier</button></div>'
+   +'<div class="card" style="padding:22px;margin-bottom:18px;">'
+   +'<h2 style="margin:0 0 12px;color:var(--navy);">👤 '+s(d.nom)+' '+s(d.prenom)+'</h2>'
+   +'<div class="modal-grid">'
+   +'<div class="modal-field"><div class="lbl">Date de naissance</div><div class="val">'+s(d.date_naissance?fmtDate(d.date_naissance):'—')+'</div></div>'
+   +'<div class="modal-field"><div class="lbl">Téléphone</div><div class="val">'+s(d.telephone||'—')+'</div></div>'
+   +'<div class="modal-field"><div class="lbl">Groupe sanguin</div><div class="val">'+s(d.groupe_sanguin||'—')+'</div></div>'
+   +'<div class="modal-field"><div class="lbl">Situation familiale</div><div class="val">'+s(d.situation_familiale||'—')+'</div></div>'
+   +'<div class="modal-field"><div class="lbl">Créé le</div><div class="val">'+s(fmtDateTime(d.created_at))+'</div></div>'
+   +'</div></div>'
+   +'<div class="card" style="padding:18px;">'
+   +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">'
+   +'<h3 style="margin:0;color:var(--navy);">📋 Fiches médicales du dossier</h3>'
+   +'<button class="btn btn-primary" onclick="navigateTo(\'fiche-create\')">➕ Ajouter une fiche</button>'
+   +'</div>'
+   +((fiches&&fiches.length)
+     ? '<div style="display:flex;flex-direction:column;gap:8px;">'+fiches.map(f=>'<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg2);border-radius:var(--radius-sm);"><span class="badge '+(stMap[f.statut]||'')+'">'+s(f.statut||'')+'</span>'+(f.urgence?'<span class="badge badge-red">'+s(f.urgence)+'</span>':'')+'<span style="font-size:.85em;color:var(--text2);">'+fmtDateTime(f.created_at)+'</span><button class="btn btn-sm btn-cyan" style="margin-left:auto;" onclick="viewFiche(\''+f.id+'\')">👁️ Voir</button></div>').join('')+'</div>'
+     : '<div class="empty-state" style="padding:24px;"><div class="es-icon">📋</div><p>Aucune fiche médicale. Cliquez sur « Ajouter une fiche ».</p></div>')
+   +'</div>';
+}
+async function deleteDossier(id){
+  if(!confirm('Supprimer ce dossier ?\nLes fiches associées seront détachées (non supprimées).'))return;
+  const{error}=await sb.from('chlencodage_dossiers_patients').delete().eq('id',id);
+  if(error){toast('Erreur: '+error.message,'error');return;}
+  toast('🗑️ Dossier supprimé','success');_currentDossier=null;navigateTo('dossiers');
+}
+function prefillFromDossier(){
+  if(!_currentDossier)return;
+  const d=_currentDossier;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e&&v!=null)e.value=v;};
+  set('pNom',d.nom);set('pPrenom',d.prenom);set('pDob',d.date_naissance);set('pTel',d.telephone);
+  // Visual hint
+  const ca=document.getElementById('contentArea');
+  if(ca){
+    const hint=document.createElement('div');
+    hint.style.cssText='background:linear-gradient(135deg,var(--cyan-dark),var(--cyan));color:var(--navy-dark);padding:10px 18px;border-radius:var(--radius-sm);margin-bottom:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;';
+    hint.innerHTML='🗂️ Dossier : '+s(d.nom)+' '+s(d.prenom)+' <button class="btn btn-sm" style="background:rgba(13,26,58,.18);color:var(--navy-dark);border:1px solid rgba(13,26,58,.3);" onclick="showDossierDetail(\''+d.id+'\')">↩ Retour au dossier</button>';
+    ca.insertBefore(hint,ca.firstChild);
+  }
 }
 
 // ================================================
