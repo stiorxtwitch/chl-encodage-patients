@@ -1728,6 +1728,7 @@ async function showDossierDetail(id){
    +'<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;"><button class="btn btn-ghost" onclick="_currentDossier=null;navigateTo(\'dossiers\')">↩ Retour aux dossiers</button>'
    +'<button class="btn btn-primary" onclick="openExamenModal()">🔬 Ajouter un examen</button>'
    +'<button class="btn btn-cyan" onclick="navigateTo(\'fiche-create\')">➕ Ajouter une fiche médicale</button>'
+   +((_profile?.role==='supervision'||_profile?.role==='direction')?'<button class="btn btn-outline" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;" onclick="generatePatientAccess(\''+d.id+'\',\''+s(d.nom||'')+' '+s(d.prenom||'')+'\')">🔗 Générer accès patient (24h)</button>':'')
    +'<button class="btn btn-danger" style="margin-left:auto;" onclick="deleteDossier(\''+d.id+'\')">🗑️ Supprimer le dossier</button></div>'
    +'<div class="card" style="padding:22px;margin-bottom:18px;">'
    +'<h2 style="margin:0 0 12px;color:var(--navy);">👤 '+s(d.nom)+' '+s(d.prenom)+'</h2>'
@@ -2044,12 +2045,131 @@ async function toggleUserActif(id,actif){
   toast('✅ Statut mis à jour','success');loadAdmin();
 }
 
+
+// ================================================
+// PATIENT READ-ONLY ACCESS (Lien unique 24h)
+// ================================================
+async function generatePatientAccess(dossierId,patientName){
+  if(!_user){toast('Non connecté','error');return;}
+  if(_profile?.role!=='supervision'&&_profile?.role!=='direction'){toast('Réservé à la supervision','error');return;}
+  const{data,error}=await sb.from('chlencodage_patient_access_tokens').insert({dossier_id:dossierId,created_by:_user.id}).select('token,expires_at').single();
+  if(error){
+    if(/relation .* does not exist|chlencodage_patient_access_tokens/i.test(error.message)){
+      toast('⚠️ Table manquante — exécutez le script SQL fourni','error');
+      console.error('Run the migration SQL provided in chat to create chlencodage_patient_access_tokens + RPC get_patient_dossier');
+    }else{toast('Erreur: '+error.message,'error');}
+    return;
+  }
+  const url=location.origin+location.pathname+'#patient/'+data.token;
+  showPatientAccessModal(url,data.expires_at,patientName);
+  logAction&&logAction('CREATE_PATIENT_ACCESS','dossiers',dossierId,{token:data.token});
+}
+function showPatientAccessModal(url,expiresAt,name){
+  let m=document.getElementById('patientAccessModal');
+  if(!m){
+    m=document.createElement('div');m.id='patientAccessModal';
+    m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;';
+    document.body.appendChild(m);
+  }
+  const exp=new Date(expiresAt).toLocaleString('fr-BE');
+  m.innerHTML='<div style="background:var(--card);border-radius:var(--radius);max-width:620px;width:100%;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.5);">'
+    +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;"><div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#6d28d9);display:flex;align-items:center;justify-content:center;font-size:1.5em;">🔗</div>'
+    +'<div><h3 style="margin:0;color:var(--navy);">Accès Patient généré</h3><p style="margin:2px 0 0;font-size:.85em;color:var(--text2);">'+s(name||'')+'</p></div></div>'
+    +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px;">'
+    +'<div style="font-size:.75em;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);font-weight:700;margin-bottom:6px;">Lien à transmettre au patient</div>'
+    +'<input id="patientAccessUrl" type="text" readonly value="'+s(url)+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--card);font-family:var(--mono);font-size:.82em;color:var(--text);" onclick="this.select()"></div>'
+    +'<div style="display:flex;align-items:center;gap:10px;font-size:.85em;color:var(--text2);margin-bottom:18px;"><span style="font-size:1.2em;">⏱️</span>Expire le <strong style="color:var(--navy);">'+s(exp)+'</strong> (24h)</div>'
+    +'<div style="background:rgba(245,158,11,.1);border-left:3px solid var(--warning);padding:10px 12px;border-radius:var(--radius-sm);font-size:.82em;color:var(--text2);margin-bottom:18px;">ℹ️ Le patient consultera son dossier en <strong>lecture seule</strong>, sans connexion. Seules les fiches <strong>validées</strong> sont visibles.</div>'
+    +'<div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">'
+    +'<button class="btn btn-ghost" onclick="document.getElementById(\'patientAccessModal\').remove()">Fermer</button>'
+    +'<button class="btn btn-primary" onclick="navigator.clipboard.writeText(document.getElementById(\'patientAccessUrl\').value).then(()=>toast(\'✅ Lien copié\',\'success\'))">📋 Copier le lien</button>'
+    +'</div></div>';
+}
+
+// PATIENT PUBLIC VIEW (no login)
+function _isPatientRoute(){return (location.hash||'').startsWith('#patient/');}
+function _getPatientToken(){return (location.hash||'').replace('#patient/','').trim();}
+async function renderPatientPublicView(){
+  document.querySelectorAll('.sidebar,.topbar,#authGate,#sessionBar,#inactOverlay').forEach(el=>{if(el)el.style.display='none';});
+  const ls=document.getElementById('loadingScreen');if(ls)ls.style.display='none';
+  let root=document.getElementById('patientPublicRoot');
+  if(!root){root=document.createElement('div');root.id='patientPublicRoot';root.style.cssText='min-height:100vh;background:linear-gradient(135deg,#0d1a3a 0%,#1a2f6b 100%);padding:24px 16px;';document.body.appendChild(root);}
+  root.innerHTML='<div style="max-width:880px;margin:0 auto;color:#fff;text-align:center;padding:80px 20px;"><div style="font-size:3em;margin-bottom:16px;">⏳</div><h2>Chargement de votre dossier…</h2></div>';
+  const token=_getPatientToken();
+  if(!token||!/^[0-9a-f-]{30,}$/i.test(token)){_patientError(root,'Lien invalide.');return;}
+  const{data,error}=await sb.rpc('get_patient_dossier',{p_token:token});
+  if(error){_patientError(root,'Erreur: '+(error.message||'inconnue'));return;}
+  if(!data||data.error){_patientError(root,data?.error==='token_invalid_or_expired'?'Ce lien a expiré ou est invalide.':'Accès refusé.');return;}
+  const d=data.dossier||{},fiches=data.fiches||[],meds=data.fiches_medicales||[];
+  const expDate=new Date(data.expires_at);
+  const stMap={brouillon:'#6b7280',soumis:'#3b82f6',valide:'#10b981',refuse:'#ef4444'};
+  let html='<div style="max-width:980px;margin:0 auto;">'
+    +'<div style="background:rgba(255,255,255,.08);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:24px;margin-bottom:18px;color:#fff;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">'
+    +'<div style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:1.6em;font-weight:800;">'+s(((d.nom||'?')[0]+(d.prenom||'')[0]).toUpperCase())+'</div>'
+    +'<div style="flex:1;min-width:220px;"><div style="font-size:.75em;text-transform:uppercase;letter-spacing:1px;opacity:.7;font-weight:700;">Dossier Patient · Lecture seule</div>'
+    +'<div style="font-size:1.5em;font-weight:800;margin-top:2px;">'+s(d.nom||'')+' '+s(d.prenom||'')+'</div>'
+    +'<div style="font-size:.85em;opacity:.85;margin-top:4px;">'+(d.date_naissance?'Né(e) le '+fmtDate(d.date_naissance):'')+(d.groupe_sanguin?' · 🩸 '+s(d.groupe_sanguin):'')+'</div></div>'
+    +'<div style="text-align:right;font-size:.78em;opacity:.85;">⏱️ Accès expire le<br><strong>'+s(expDate.toLocaleString('fr-BE'))+'</strong></div></div>'
+    // Info card
+    +'<div style="background:#fff;border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 6px 24px rgba(0,0,0,.2);">'
+    +'<h3 style="margin:0 0 14px;color:#1a2f6b;">👤 Informations personnelles</h3>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">'
+    +_pf('Nom',d.nom)+_pf('Prénom',d.prenom)+_pf('Date de naissance',d.date_naissance?fmtDate(d.date_naissance):'—')
+    +_pf('Téléphone',d.telephone||'—')+_pf('Groupe sanguin',d.groupe_sanguin||'—')+_pf('Situation familiale',d.situation_familiale||'—')
+    +'</div></div>'
+    // Fiches
+    +'<div style="background:#fff;border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 6px 24px rgba(0,0,0,.2);">'
+    +'<h3 style="margin:0 0 14px;color:#1a2f6b;">📋 Fiches médicales validées <span style="font-size:.7em;color:#6b7280;">('+fiches.length+')</span></h3>';
+  if(!fiches.length){
+    html+='<div style="text-align:center;padding:30px;color:#94a3b8;">Aucune fiche médicale validée à afficher.</div>';
+  }else{
+    html+='<div style="display:flex;flex-direction:column;gap:12px;">';
+    fiches.forEach(f=>{
+      const med=meds.find(m=>m.fiche_id===f.id);
+      html+='<div style="border:1px solid #e2e8f0;border-radius:10px;padding:16px;background:#f8fafc;">'
+        +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">'
+        +'<span style="background:'+(stMap[f.statut]||'#6b7280')+';color:#fff;padding:3px 10px;border-radius:10px;font-size:.72em;font-weight:700;text-transform:uppercase;">'+s(f.statut)+'</span>'
+        +(f.urgence?'<span style="background:#ef4444;color:#fff;padding:3px 10px;border-radius:10px;font-size:.72em;font-weight:700;">'+s(f.urgence)+'</span>':'')
+        +'<span style="font-size:.82em;color:#64748b;">'+fmtDateTime(f.created_at)+'</span></div>'
+        +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;font-size:.85em;">'
+        +_pf('Date IN',f.in_date?fmtDate(f.in_date):'—')+_pf('Heure IN',f.heure_in||'—')+_pf('Heure OUT',f.heure_out||'—')
+        +_pf('Conscience',f.conscience==null?'—':(f.conscience?'Oui':'Non'))+_pf('Respiration',f.respiration==null?'—':(f.respiration?'Oui':'Non'))+_pf('Circulation',f.circulation==null?'—':(f.circulation?'Oui':'Non'))
+        +_pf('Hémorragie',f.hemorragie||'—')
+        +'</div>'
+        +(f.autres_soins?'<div style="margin-top:10px;padding:10px;background:#fff;border-radius:6px;font-size:.85em;"><strong style="color:#1a2f6b;">Autres soins :</strong> '+s(f.autres_soins)+'</div>':'')
+        +(med?'<div style="margin-top:10px;padding:10px;background:#ecfeff;border-left:3px solid #06b6d4;border-radius:6px;font-size:.85em;"><strong style="color:#0891b2;">🏥 Fiche médicale jointe</strong>'+(med.bilan_remarques?'<div style="margin-top:6px;color:#475569;white-space:pre-wrap;">'+s(med.bilan_remarques)+'</div>':'')+'</div>':'')
+        +'</div>';
+    });
+    html+='</div>';
+  }
+  html+='</div>'
+    +'<div style="text-align:center;color:rgba(255,255,255,.6);font-size:.78em;padding:20px;">🔒 Accès sécurisé en lecture seule · CHL — Centre Hospitalier de Liège</div>'
+    +'</div>';
+  root.innerHTML=html;
+}
+function _pf(label,val){return '<div><div style="font-size:.72em;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8;font-weight:700;">'+s(label)+'</div><div style="font-size:.95em;color:#0d1a3a;font-weight:600;margin-top:2px;">'+s(val==null?'—':val)+'</div></div>';}
+function _patientError(root,msg){
+  root.innerHTML='<div style="max-width:520px;margin:80px auto;background:#fff;border-radius:14px;padding:40px 30px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3);">'
+    +'<div style="font-size:3.5em;margin-bottom:16px;">🔒</div>'
+    +'<h2 style="color:#1a2f6b;margin:0 0 10px;">Accès indisponible</h2>'
+    +'<p style="color:#64748b;margin:0 0 20px;">'+s(msg)+'</p>'
+    +'<p style="color:#94a3b8;font-size:.85em;">Veuillez contacter le service hospitalier pour générer un nouveau lien.</p>'
+    +'</div>';
+}
+
 // ================================================
 // BOOT — DOMContentLoaded
 // BUG FIX #10 : loginPwd → loginPass
 // ================================================
 document.addEventListener('DOMContentLoaded',function(){
   setTimeout(function(){const ls=document.getElementById('loadingScreen');if(ls)ls.style.display='none';},800);
+
+  // PATIENT PUBLIC ACCESS — bypass everything if URL has #patient/<token>
+  if(_isPatientRoute()){
+    setTimeout(()=>renderPatientPublicView(),50);
+    window.addEventListener('hashchange',()=>{if(_isPatientRoute())renderPatientPublicView();else location.reload();});
+    return;
+  }
 
   // BUG FIX #10 : 'loginPass' (pas 'loginPwd')
   ['loginEmail','loginPass','loginCaptchaA'].forEach(function(id){
