@@ -1728,7 +1728,7 @@ async function showDossierDetail(id){
    +'<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;"><button class="btn btn-ghost" onclick="_currentDossier=null;navigateTo(\'dossiers\')">↩ Retour aux dossiers</button>'
    +'<button class="btn btn-primary" onclick="openExamenModal()">🔬 Ajouter un examen</button>'
    +'<button class="btn btn-cyan" onclick="navigateTo(\'fiche-create\')">➕ Ajouter une fiche médicale</button>'
-   +((_profile?.role==='supervision'||_profile?.role==='direction')?'<button class="btn btn-outline" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;" onclick="generatePatientAccess(\''+d.id+'\',\''+s(d.nom||'')+' '+s(d.prenom||'')+'\')">🔗 Générer accès patient (24h)</button>':'')
+   +((_profile?.role==='supervision'||_profile?.role==='direction')?'<button class="btn btn-outline" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;" onclick="generatePatientAccess(\''+d.id+'\',\''+s(d.nom||'')+' '+s(d.prenom||'')+'\')">🔑 Générer code patient</button>':'')
    +'<button class="btn btn-danger" style="margin-left:auto;" onclick="deleteDossier(\''+d.id+'\')">🗑️ Supprimer le dossier</button></div>'
    +'<div class="card" style="padding:22px;margin-bottom:18px;">'
    +'<h2 style="margin:0 0 12px;color:var(--navy);">👤 '+s(d.nom)+' '+s(d.prenom)+'</h2>'
@@ -2047,24 +2047,32 @@ async function toggleUserActif(id,actif){
 
 
 // ================================================
-// PATIENT READ-ONLY ACCESS (Lien unique 24h)
+// PATIENT READ-ONLY ACCESS (Code unique 24h)
 // ================================================
+function _genShortCode(){
+  // 8 chars alphanumériques sans ambiguïté
+  const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let c='';for(let i=0;i<8;i++)c+=alphabet[Math.floor(Math.random()*alphabet.length)];
+  return c.slice(0,4)+'-'+c.slice(4);
+}
 async function generatePatientAccess(dossierId,patientName){
   if(!_user){toast('Non connecté','error');return;}
   if(_profile?.role!=='supervision'&&_profile?.role!=='direction'){toast('Réservé à la supervision','error');return;}
-  const{data,error}=await sb.from('chlencodage_patient_access_tokens').insert({dossier_id:dossierId,created_by:_user.id}).select('token,expires_at').single();
+  // On garde la table existante : le "code" lisible est généré côté client et stocké dans la colonne token.
+  const code=_genShortCode();
+  const{data,error}=await sb.from('chlencodage_patient_access_tokens').insert({dossier_id:dossierId,created_by:_user.id,token:code}).select('token,expires_at').single();
   if(error){
     if(/relation .* does not exist|chlencodage_patient_access_tokens/i.test(error.message)){
       toast('⚠️ Table manquante — exécutez le script SQL fourni','error');
-      console.error('Run the migration SQL provided in chat to create chlencodage_patient_access_tokens + RPC get_patient_dossier');
+    }else if(/token/i.test(error.message)&&/type|invalid|uuid/i.test(error.message)){
+      toast('⚠️ La colonne token doit être TEXT. Exécutez : ALTER TABLE chlencodage_patient_access_tokens ALTER COLUMN token TYPE text;','error');
     }else{toast('Erreur: '+error.message,'error');}
     return;
   }
-  const url=location.origin+location.pathname+'#patient/'+data.token;
-  showPatientAccessModal(url,data.expires_at,patientName);
+  showPatientAccessModal(data.token,data.expires_at,patientName);
   logAction&&logAction('CREATE_PATIENT_ACCESS','dossiers',dossierId,{token:data.token});
 }
-function showPatientAccessModal(url,expiresAt,name){
+function showPatientAccessModal(code,expiresAt,name){
   let m=document.getElementById('patientAccessModal');
   if(!m){
     m=document.createElement('div');m.id='patientAccessModal';
@@ -2072,52 +2080,92 @@ function showPatientAccessModal(url,expiresAt,name){
     document.body.appendChild(m);
   }
   const exp=new Date(expiresAt).toLocaleString('fr-BE');
+  const portal=location.origin+location.pathname+'#patient';
   m.innerHTML='<div style="background:var(--card);border-radius:var(--radius);max-width:620px;width:100%;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.5);">'
-    +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;"><div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#6d28d9);display:flex;align-items:center;justify-content:center;font-size:1.5em;">🔗</div>'
-    +'<div><h3 style="margin:0;color:var(--navy);">Accès Patient généré</h3><p style="margin:2px 0 0;font-size:.85em;color:var(--text2);">'+s(name||'')+'</p></div></div>'
-    +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px;">'
-    +'<div style="font-size:.75em;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);font-weight:700;margin-bottom:6px;">Lien à transmettre au patient</div>'
-    +'<input id="patientAccessUrl" type="text" readonly value="'+s(url)+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--card);font-family:var(--mono);font-size:.82em;color:var(--text);" onclick="this.select()"></div>'
+    +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;"><div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#6d28d9);display:flex;align-items:center;justify-content:center;font-size:1.5em;">🔑</div>'
+    +'<div><h3 style="margin:0;color:var(--navy);">Code patient généré</h3><p style="margin:2px 0 0;font-size:.85em;color:var(--text2);">'+s(name||'')+'</p></div></div>'
+    +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:18px;margin-bottom:14px;text-align:center;">'
+    +'<div style="font-size:.72em;text-transform:uppercase;letter-spacing:1px;color:var(--text2);font-weight:700;margin-bottom:10px;">Code à transmettre au patient</div>'
+    +'<div id="patientAccessCode" style="font-family:var(--mono);font-size:2em;font-weight:700;letter-spacing:.15em;color:var(--navy);user-select:all;cursor:pointer;" onclick="navigator.clipboard.writeText(this.textContent).then(()=>toast(\'✅ Code copié\',\'success\'))">'+s(code)+'</div>'
+    +'</div>'
+    +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;">'
+    +'<div style="font-size:.72em;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);font-weight:700;margin-bottom:6px;">Portail patient</div>'
+    +'<input id="patientPortalUrl" type="text" readonly value="'+s(portal)+'" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--card);font-family:var(--mono);font-size:.78em;color:var(--text);" onclick="this.select()"></div>'
     +'<div style="display:flex;align-items:center;gap:10px;font-size:.85em;color:var(--text2);margin-bottom:18px;"><span style="font-size:1.2em;">⏱️</span>Expire le <strong style="color:var(--navy);">'+s(exp)+'</strong> (24h)</div>'
-    +'<div style="background:rgba(245,158,11,.1);border-left:3px solid var(--warning);padding:10px 12px;border-radius:var(--radius-sm);font-size:.82em;color:var(--text2);margin-bottom:18px;">ℹ️ Le patient consultera son dossier en <strong>lecture seule</strong>, sans connexion. Seules les fiches <strong>validées</strong> sont visibles.</div>'
+    +'<div style="background:rgba(245,158,11,.1);border-left:3px solid var(--warning);padding:10px 12px;border-radius:var(--radius-sm);font-size:.82em;color:var(--text2);margin-bottom:18px;">ℹ️ Le patient se rend sur le portail, entre son code, et consulte son dossier en <strong>lecture seule</strong>. Seules les fiches <strong>validées</strong> sont visibles.</div>'
     +'<div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">'
     +'<button class="btn btn-ghost" onclick="document.getElementById(\'patientAccessModal\').remove()">Fermer</button>'
-    +'<button class="btn btn-primary" onclick="navigator.clipboard.writeText(document.getElementById(\'patientAccessUrl\').value).then(()=>toast(\'✅ Lien copié\',\'success\'))">📋 Copier le lien</button>'
+    +'<button class="btn btn-outline" onclick="navigator.clipboard.writeText(document.getElementById(\'patientPortalUrl\').value).then(()=>toast(\'✅ Lien copié\',\'success\'))">📋 Copier le lien</button>'
+    +'<button class="btn btn-primary" onclick="navigator.clipboard.writeText(document.getElementById(\'patientAccessCode\').textContent).then(()=>toast(\'✅ Code copié\',\'success\'))">🔑 Copier le code</button>'
     +'</div></div>';
 }
 
 // PATIENT PUBLIC VIEW (no login)
-function _isPatientRoute(){return (location.hash||'').startsWith('#patient/');}
-function _getPatientToken(){return (location.hash||'').replace('#patient/','').trim();}
-async function renderPatientPublicView(){
+function _isPatientRoute(){return (location.hash||'').startsWith('#patient');}
+function _getPatientToken(){
+  const h=location.hash||'';
+  if(h.startsWith('#patient/'))return h.replace('#patient/','').trim();
+  return '';
+}
+function _patientShell(inner){
   document.querySelectorAll('.sidebar,.topbar,#authGate,#sessionBar,#inactOverlay').forEach(el=>{if(el)el.style.display='none';});
   const ls=document.getElementById('loadingScreen');if(ls)ls.style.display='none';
   let root=document.getElementById('patientPublicRoot');
   if(!root){root=document.createElement('div');root.id='patientPublicRoot';root.style.cssText='min-height:100vh;background:linear-gradient(135deg,#0d1a3a 0%,#1a2f6b 100%);padding:24px 16px;';document.body.appendChild(root);}
-  root.innerHTML='<div style="max-width:880px;margin:0 auto;color:#fff;text-align:center;padding:80px 20px;"><div style="font-size:3em;margin-bottom:16px;">⏳</div><h2>Chargement de votre dossier…</h2></div>';
+  root.innerHTML=inner;
+  return root;
+}
+function renderPatientCodeForm(prefillError){
+  const root=_patientShell('');
+  root.innerHTML='<div style="max-width:480px;margin:80px auto;background:#fff;border-radius:16px;padding:40px 32px;box-shadow:0 20px 60px rgba(0,0,0,.4);">'
+    +'<div style="text-align:center;margin-bottom:24px;"><div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#6d28d9);display:flex;align-items:center;justify-content:center;font-size:2em;margin:0 auto 14px;">🔑</div>'
+    +'<h2 style="margin:0;color:#1a2f6b;">Portail Patient</h2>'
+    +'<p style="margin:8px 0 0;color:#64748b;font-size:.9em;">Entrez le code à 8 caractères fourni par votre service hospitalier.</p></div>'
+    +(prefillError?'<div style="background:rgba(239,68,68,.1);border-left:3px solid #ef4444;padding:10px 12px;border-radius:6px;font-size:.85em;color:#b91c1c;margin-bottom:14px;">'+s(prefillError)+'</div>':'')
+    +'<form id="patientCodeForm" onsubmit="event.preventDefault();_submitPatientCode();">'
+    +'<input id="patientCodeInput" type="text" autocomplete="off" autocapitalize="characters" maxlength="9" placeholder="XXXX-XXXX" style="width:100%;padding:16px;border:2px solid #cbd5e0;border-radius:10px;font-family:\'JetBrains Mono\',monospace;font-size:1.5em;text-align:center;letter-spacing:.15em;text-transform:uppercase;color:#1a2f6b;" oninput="this.value=this.value.toUpperCase()">'
+    +'<button type="submit" style="width:100%;margin-top:14px;padding:14px;border:none;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;font-size:1em;font-weight:700;cursor:pointer;">Accéder à mon dossier →</button>'
+    +'</form>'
+    +'<p style="text-align:center;margin:20px 0 0;color:#94a3b8;font-size:.78em;">🔒 Accès sécurisé · code valable 24h</p>'
+    +'</div>';
+  setTimeout(()=>{const i=document.getElementById('patientCodeInput');if(i)i.focus();},50);
+}
+function _submitPatientCode(){
+  const raw=(document.getElementById('patientCodeInput')?.value||'').trim().toUpperCase();
+  if(!raw){renderPatientCodeForm('Veuillez saisir un code.');return;}
+  // accepte XXXX-XXXX ou XXXXXXXX
+  const code=raw.includes('-')?raw:(raw.length===8?raw.slice(0,4)+'-'+raw.slice(4):raw);
+  if(!/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)){renderPatientCodeForm('Format invalide. Exemple : ABCD-1234');return;}
+  location.hash='#patient/'+code;
+}
+async function renderPatientPublicView(){
   const token=_getPatientToken();
-  if(!token||!/^[0-9a-f-]{30,}$/i.test(token)){_patientError(root,'Lien invalide.');return;}
+  if(!token){renderPatientCodeForm();return;}
+  const root=_patientShell('<div style="max-width:880px;margin:0 auto;color:#fff;text-align:center;padding:80px 20px;"><div style="font-size:3em;margin-bottom:16px;">⏳</div><h2>Vérification du code…</h2></div>');
   const{data,error}=await sb.rpc('get_patient_dossier',{p_token:token});
   if(error){_patientError(root,'Erreur: '+(error.message||'inconnue'));return;}
-  if(!data||data.error){_patientError(root,data?.error==='token_invalid_or_expired'?'Ce lien a expiré ou est invalide.':'Accès refusé.');return;}
+  if(!data||data.error){_patientError(root,data?.error==='token_invalid_or_expired'?'Ce code a expiré ou est invalide.':'Accès refusé.');return;}
   const d=data.dossier||{},fiches=data.fiches||[],meds=data.fiches_medicales||[];
   const expDate=new Date(data.expires_at);
   const stMap={brouillon:'#6b7280',soumis:'#3b82f6',valide:'#10b981',refuse:'#ef4444'};
+  const fullName=((d.nom||'')+' '+(d.prenom||'')).trim();
   let html='<div style="max-width:980px;margin:0 auto;">'
+    // Confirmation banner
+    +'<div style="background:linear-gradient(135deg,#10b981,#059669);border-radius:14px;padding:20px 24px;margin-bottom:18px;color:#fff;text-align:center;box-shadow:0 6px 24px rgba(16,185,129,.4);">'
+    +'<div style="font-size:.78em;text-transform:uppercase;letter-spacing:1px;opacity:.9;font-weight:700;">✅ Code valide</div>'
+    +'<div style="font-size:1.4em;font-weight:700;margin-top:4px;">Votre nom est bien <strong>'+s(fullName||'—')+'</strong></div></div>'
     +'<div style="background:rgba(255,255,255,.08);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:24px;margin-bottom:18px;color:#fff;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">'
     +'<div style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:1.6em;font-weight:800;">'+s(((d.nom||'?')[0]+(d.prenom||'')[0]).toUpperCase())+'</div>'
     +'<div style="flex:1;min-width:220px;"><div style="font-size:.75em;text-transform:uppercase;letter-spacing:1px;opacity:.7;font-weight:700;">Dossier Patient · Lecture seule</div>'
     +'<div style="font-size:1.5em;font-weight:800;margin-top:2px;">'+s(d.nom||'')+' '+s(d.prenom||'')+'</div>'
     +'<div style="font-size:.85em;opacity:.85;margin-top:4px;">'+(d.date_naissance?'Né(e) le '+fmtDate(d.date_naissance):'')+(d.groupe_sanguin?' · 🩸 '+s(d.groupe_sanguin):'')+'</div></div>'
     +'<div style="text-align:right;font-size:.78em;opacity:.85;">⏱️ Accès expire le<br><strong>'+s(expDate.toLocaleString('fr-BE'))+'</strong></div></div>'
-    // Info card
     +'<div style="background:#fff;border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 6px 24px rgba(0,0,0,.2);">'
     +'<h3 style="margin:0 0 14px;color:#1a2f6b;">👤 Informations personnelles</h3>'
     +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">'
     +_pf('Nom',d.nom)+_pf('Prénom',d.prenom)+_pf('Date de naissance',d.date_naissance?fmtDate(d.date_naissance):'—')
     +_pf('Téléphone',d.telephone||'—')+_pf('Groupe sanguin',d.groupe_sanguin||'—')+_pf('Situation familiale',d.situation_familiale||'—')
     +'</div></div>'
-    // Fiches
     +'<div style="background:#fff;border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 6px 24px rgba(0,0,0,.2);">'
     +'<h3 style="margin:0 0 14px;color:#1a2f6b;">📋 Fiches médicales validées <span style="font-size:.7em;color:#6b7280;">('+fiches.length+')</span></h3>';
   if(!fiches.length){
@@ -2153,7 +2201,8 @@ function _patientError(root,msg){
     +'<div style="font-size:3.5em;margin-bottom:16px;">🔒</div>'
     +'<h2 style="color:#1a2f6b;margin:0 0 10px;">Accès indisponible</h2>'
     +'<p style="color:#64748b;margin:0 0 20px;">'+s(msg)+'</p>'
-    +'<p style="color:#94a3b8;font-size:.85em;">Veuillez contacter le service hospitalier pour générer un nouveau lien.</p>'
+    +'<button onclick="location.hash=\'#patient\'" style="padding:10px 20px;border:none;border-radius:8px;background:#1a2f6b;color:#fff;font-weight:600;cursor:pointer;margin-bottom:10px;">↩️ Saisir un autre code</button>'
+    +'<p style="color:#94a3b8;font-size:.85em;margin-top:14px;">Veuillez contacter le service hospitalier pour générer un nouveau code.</p>'
     +'</div>';
 }
 
