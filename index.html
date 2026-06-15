@@ -473,6 +473,7 @@ let _sessionTimer=null,_sessionWarnTimer=null;
 let _inactTimer=null,_inactWarnTimer=null,_inactBarInterval=null,_inactWarnInterval=null,_inactOverlayShown=false,_inactStart=null;
 const INACT_MS=60*60*1000,INACT_WARN_MS=60*1000,SESS_MS=60*60*1000,SESS_WARN_MS=5*60*1000;
 let _ficheId=null,_medSaved=false,_ficheViewId=null;
+let _patientFormDOM=null,_medicalFormDOM=null,_editing=false,_editingDossierId=null;
 let _bodyData={},_bodyDataMed={},_activeLesion='Fracture',_activeLesionMed='Fracture';
 let _ynValues={},_evoColCount=0,_matValues={},_bilanBuilt=false,_matBuilt=false,_soignantCount=0;
 let _syncFromTable=false,_syncFromSchema=false;
@@ -582,6 +583,7 @@ function stopInactivity(){clearTimeout(_inactTimer);clearTimeout(_inactWarnTimer
 const PAGE_TITLES={dashboard:'Tableau de bord',patients:'Nouveau Dossier Patient','fiche-create':'Ajouter une Fiche Médicale','fiches-list':'Mes Fiches',dossiers:'Dossiers Médicaux','refus-soins':'Refus de Soins',impayes:'Impayés','soins-police':'Soins Police',mortuaire:'Mortuaire',certificats:'Certificats de Travail','prise-service':'Prise de Service',pathologies:'Pathologies',protocoles:'Protocoles de Soins',tarifs:'Tarifs',compte:'Mon Compte',logs:"Logs d'Activité",admin:'Administration','medical-form':'Fiche Médicale'};
 let _currentView='';
 function navigateTo(view){
+  if(view!=='fiche-create'&&view!=='medical-form'){_patientFormDOM=null;_medicalFormDOM=null;}
   _currentView=view;document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.view===view));
   document.getElementById('pageTitle').textContent=PAGE_TITLES[view]||view;
   document.getElementById('pageBreadcrumb').textContent='CHL — '+(PAGE_TITLES[view]||view);
@@ -814,7 +816,7 @@ function renderBodySvg(svgId,pfx,clickFn){return`<svg id="${svgId}" viewBox="0 0
   </svg>`;}
 
 function initPatientForm(){
-  _ficheId=null;_medSaved=false;_selectedPathologies=[];_bodyData={};_bodyDataMed={};_activeLesion='Fracture';_ynValues={};_evoColCount=0;_soignantCount=0;
+  _ficheId=null;_medSaved=false;_editing=false;_selectedPathologies=[];_bodyData={};_bodyDataMed={};_activeLesion='Fracture';_ynValues={};_evoColCount=0;_soignantCount=0;
   updateUrgPills();updateBodySvg();updateZonesList();updateSavedIndicator();
   if(!_bilanBuilt)buildBilanTable();if(!_matBuilt)buildMaterielTable();addSoignant();
   const ppb=document.getElementById('pathPickerBody');if(ppb)ppb.innerHTML=renderPathologyPicker([]);
@@ -847,7 +849,21 @@ function collectFicheData(){
   return{fiche_medicale:getRadio('pFicheMed')==='oui',numero_odin:s(document.getElementById('pOdin')?.value?.trim())||null,nom_aps:s(document.getElementById('pAps')?.value?.trim())||null,numero_patient:s(document.getElementById('pNumPat')?.value?.trim())||null,patient_nom:s(document.getElementById('pNom')?.value?.trim())||null,patient_prenom:s(document.getElementById('pPrenom')?.value?.trim())||null,date_naissance:document.getElementById('pDob')?.value||null,est_mineur:getChecked('pMineur'),sexe:getRadio('pSexe')||null,adresse:s(document.getElementById('pAdresse')?.value?.trim())||null,telephone:s(document.getElementById('pTel')?.value?.trim())||null,numero_cl:s(document.getElementById('pCl')?.value?.trim())||null,in_spontanee:getChecked('pInSpontanee'),in_via_equipe:getChecked('pInEquipe'),in_via_ambulance:getChecked('pInAmbu'),in_num_ambulance:s(document.getElementById('pInNumAmbu')?.value?.trim())||null,in_autre_moyen:s(document.getElementById('pInAutre')?.value?.trim())||null,in_date:document.getElementById('pInDate')?.value||null,heure_in:document.getElementById('pHeurIn')?.value||null,conscience:getRadio('pConscience')==='oui'?true:getRadio('pConscience')==='non'?false:null,respiration:getRadio('pResp')==='oui'?true:getRadio('pResp')==='non'?false:null,circulation:getRadio('pCirc')==='oui'?true:getRadio('pCirc')==='non'?false:null,hemorragie:getRadio('pHemo')||null,urgence:getRadio('pUrg')||null,bilan_tableau:bilanData,autre_lesion_precision:autreTxt?s(autreTxt):null,pathologies_ids:JSON.stringify(_selectedPathologies),soins,autres_soins:s(document.getElementById('pAutresSoins')?.value?.trim())||null,materiel:getMateriel(),out_retour_normal:getChecked('pOutNormal'),out_refus_soins:getChecked('pOutRefus'),out_evacuation_vsl:getChecked('pOutVsl'),out_evacuation_ambulance:getChecked('pOutAmbu'),out_num_ambulance:s(document.getElementById('pOutNumAmbu')?.value?.trim())||null,out_vecteur:s(document.getElementById('pOutVecteur')?.value?.trim())||null,out_autre_moyen:s(document.getElementById('pOutAutre')?.value?.trim())||null,heure_out:document.getElementById('pHeurOut')?.value||null,soignants:getSoignants()};
 }
 async function saveFiche(){
-  if(!_user)return;if(_ficheId){toast('Fiche déjà sauvegardée.','info');return;}
+  if(!_user)return;
+  if(_ficheId&&_editing){
+    const data=collectFicheData();
+    if(!data.patient_nom&&!data.patient_prenom){toast('Veuillez renseigner le nom ou prénom du patient','error');return;}
+    const soignants=data.soignants;delete data.soignants;
+    const upd={...data,statut:'brouillon',rejection_reason:null};
+    Object.keys(upd).forEach(k=>{if(upd[k]===undefined)delete upd[k];});
+    const{error}=await sb.from('chlencodage_fiches_patients').update(upd).eq('id',_ficheId);
+    if(error){toast('Erreur: '+error.message,'error');return;}
+    await sb.from('chlencodage_fiche_soignants').delete().eq('fiche_id',_ficheId);
+    if(soignants.length){const rows=soignants.filter(sg=>sg.nom?.trim()).map(sg=>({...sg,fiche_id:_ficheId}));if(rows.length)await sb.from('chlencodage_fiche_soignants').insert(rows);}
+    toast('✅ Fiche modifiée !','success');logAction('UPDATE_FICHE','patients',_ficheId,{});
+    return;
+  }
+  if(_ficheId){toast('Fiche déjà sauvegardée.','info');return;}
   const data=collectFicheData();
   if(!data.patient_nom&&!data.patient_prenom){toast('Veuillez renseigner le nom ou prénom du patient','error');return;}
   const soignants=data.soignants;delete data.soignants;
@@ -867,12 +883,37 @@ async function saveAndOpenMedical(){
   switchToMedicalFormView(pn,pp);
 }
 function switchToMedicalFormView(nom,prenom){
+  const ca=document.getElementById('contentArea');
+  // Detach current patient form DOM (preserve all input values)
+  _patientFormDOM=document.createElement('div');
+  while(ca.firstChild)_patientFormDOM.appendChild(ca.firstChild);
   _currentView='medical-form';document.getElementById('pageTitle').textContent='Fiche Médicale';
   document.getElementById('ficheIndicator').classList.add('show');
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
-  _bodyDataMed=JSON.parse(JSON.stringify(_bodyData));renderMedicalFormView(nom||'',prenom||'');
+  if(_medicalFormDOM){
+    while(_medicalFormDOM.firstChild)ca.appendChild(_medicalFormDOM.firstChild);
+    _medicalFormDOM=null;
+  }else{
+    _bodyDataMed=JSON.parse(JSON.stringify(_bodyData));renderMedicalFormView(nom||'',prenom||'');
+  }
 }
-function switchToMainPatientForm(){document.getElementById('ficheIndicator').classList.remove('show');navigateTo('patients');updateSavedIndicator();}
+function switchToMainPatientForm(){
+  const ca=document.getElementById('contentArea');
+  // Detach medical form DOM so user can come back to it
+  _medicalFormDOM=document.createElement('div');
+  while(ca.firstChild)_medicalFormDOM.appendChild(ca.firstChild);
+  document.getElementById('ficheIndicator').classList.remove('show');
+  if(_patientFormDOM){
+    _currentView='fiche-create';
+    document.getElementById('pageTitle').textContent=PAGE_TITLES['fiche-create']||'Ajouter une Fiche Médicale';
+    document.getElementById('pageBreadcrumb').textContent='CHL — '+(PAGE_TITLES['fiche-create']||'');
+    while(_patientFormDOM.firstChild)ca.appendChild(_patientFormDOM.firstChild);
+    _patientFormDOM=null;
+    updateSavedIndicator();
+  }else{
+    navigateTo('fiche-create');
+  }
+}
 
 // MEDICAL FORM
 function renderMedicalFormView(nom,prenom){
@@ -1074,6 +1115,7 @@ function renderFichesListHTML(fiches){
     <div class="fiche-btns">
       <span class="status-badge ${stMap[f.statut]||''}">${f.statut}</span>
       <button class="btn btn-sm btn-outline" onclick="viewFiche('${f.id}')">👁️ Voir</button>
+      ${(f.statut==='brouillon'||f.statut==='refuse')?`<button class="btn btn-sm btn-warning" style="background:var(--warning);color:#fff;" onclick="editFiche('${f.id}')">✏️ Modifier</button>`:''}
       ${f.statut==='brouillon'?`<button class="btn btn-sm btn-cyan" onclick="submitFiche('${f.id}')">📤 Soumettre</button>`:''}
       ${canValidate&&f.statut==='soumis'?`<button class="btn btn-sm btn-success" onclick="openValidation('${f.id}','valide')">✅</button><button class="btn btn-sm btn-danger" onclick="openValidation('${f.id}','refuse')">❌</button>`:''}
       ${_profile?.role==='direction'?`<button class="btn btn-sm btn-danger" onclick="openDelete('${f.id}','${s(f.patient_nom||'?')} ${s(f.patient_prenom||'')}',deleteFicheById)">🗑️</button>`:''}
@@ -1124,6 +1166,77 @@ async function deleteFicheById(id){
   if(error){toast('Erreur: '+error.message,'error');return;}
   step(3,'done');await new Promise(r=>setTimeout(r,600));closeDeleteModal();toast('✅ Fiche supprimée.','success');logAction('DELETE_FICHE','fiches',id,{});loadFichesList();
 }
+
+// ============ EDIT FICHE (brouillon / refusée) ============
+async function editFiche(id){
+  const{data:f,error}=await sb.from('chlencodage_fiches_patients').select('*,chlencodage_fiche_soignants(*)').eq('id',id).single();
+  if(error||!f){toast('Erreur: '+(error?.message||'introuvable'),'error');return;}
+  navigateTo('fiche-create');
+  setTimeout(()=>fillPatientForm(f),250);
+}
+function _setRadio(name,val){if(val==null)return;document.querySelectorAll('input[name="'+name+'"]').forEach(r=>{r.checked=(r.value===String(val));});}
+function fillPatientForm(f){
+  _ficheId=f.id;_editing=true;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e&&v!=null)e.value=v;};
+  set('pOdin',f.numero_odin);set('pAps',f.nom_aps);set('pNumPat',f.numero_patient);
+  set('pNom',f.patient_nom);set('pPrenom',f.patient_prenom);set('pDob',f.date_naissance);
+  set('pAdresse',f.adresse);set('pTel',f.telephone);set('pCl',f.numero_cl);
+  set('pInNumAmbu',f.in_num_ambulance);set('pInAutre',f.in_autre_moyen);set('pInDate',f.in_date);set('pHeurIn',f.heure_in);
+  set('pOutNumAmbu',f.out_num_ambulance);set('pOutVecteur',f.out_vecteur);set('pOutAutre',f.out_autre_moyen);set('pHeurOut',f.heure_out);
+  set('pAutresSoins',f.autres_soins);set('autreLesionText',f.autre_lesion_precision);
+  _setRadio('pFicheMed',f.fiche_medicale?'oui':'non');
+  if(f.sexe)_setRadio('pSexe',f.sexe);
+  if(f.urgence)_setRadio('pUrg',f.urgence);
+  if(f.hemorragie)_setRadio('pHemo',f.hemorragie);
+  if(f.conscience!=null)_setRadio('pConscience',f.conscience?'oui':'non');
+  if(f.respiration!=null)_setRadio('pResp',f.respiration?'oui':'non');
+  if(f.circulation!=null)_setRadio('pCirc',f.circulation?'oui':'non');
+  [['pMineur','est_mineur'],['pInSpontanee','in_spontanee'],['pInEquipe','in_via_equipe'],['pInAmbu','in_via_ambulance'],['pOutNormal','out_retour_normal'],['pOutRefus','out_refus_soins'],['pOutVsl','out_evacuation_vsl'],['pOutAmbu','out_evacuation_ambulance']].forEach(([id,k])=>{const e=document.getElementById(id);if(e)e.checked=!!f[k];});
+  const ig=document.getElementById('inAmbuGrp');if(ig)ig.style.display=f.in_via_ambulance?'flex':'none';
+  const og=document.getElementById('outAmbuGrp');if(og)og.style.display=f.out_evacuation_ambulance?'flex':'none';
+  if(f.soins&&typeof f.soins==='object'){Object.keys(f.soins).forEach(k=>{const cb=document.querySelector('[data-soin="'+k+'"]');if(cb)cb.checked=!!f.soins[k];});}
+  if(f.bilan_tableau&&typeof f.bilan_tableau==='object'){_bodyData={};Object.entries(f.bilan_tableau).forEach(([z,arr])=>{_bodyData[z]=(arr||[]).map(l=>String(l).startsWith('Autre:')?'Autre':l);});updateBodySvg();updateZonesList();syncBodyToTable();}
+  if(f.pathologies_ids){try{_selectedPathologies=typeof f.pathologies_ids==='string'?JSON.parse(f.pathologies_ids):(f.pathologies_ids||[]);}catch(e){_selectedPathologies=[];}const ppb=document.getElementById('pathPickerBody');if(ppb)ppb.innerHTML=renderPathologyPicker(_selectedPathologies);}
+  // Soignants
+  const cont=document.getElementById('soignantsContainer');if(cont){cont.innerHTML='';_soignantCount=0;const sgs=f.chlencodage_fiche_soignants||[];if(!sgs.length){addSoignant();}else{sgs.forEach((sg,i)=>{addSoignant();const card=document.getElementById('sg_'+i);if(!card)return;const setV=(sel,v)=>{const e=card.querySelector(sel);if(e){if(e.type==='checkbox')e.checked=!!v;else e.value=v||'';}};setV('.sg-nom',sg.nom);setV('.sg-sec',sg.is_sec);setV('.sg-es',sg.is_es);setV('.sg-eps',sg.is_eps);setV('.sg-tms',sg.is_tms);setV('.sg-amu',sg.is_amu);setV('.sg-inf',sg.is_infirmier);setV('.sg-med',sg.is_medecin);setV('.sg-inami',sg.numero_inami);if(sg.is_infirmier||sg.is_medecin){const ig=document.getElementById('inami_'+i);if(ig)ig.style.display='';}});}}
+  updateUrgPills();updateSavedIndicator();
+  const b=document.getElementById('btnSaveFiche');if(b){b.textContent='💾 Enregistrer les modifications';b.disabled=false;}
+  const ind=document.getElementById('savedIndicator');if(ind){ind.classList.add('show');ind.innerHTML='✏️ Mode édition — Fiche '+s(f.id.slice(0,8))+'…'+(f.statut==='refuse'?' <span style="color:var(--danger)">(refusée — repassera en brouillon)</span>':'');}
+  toast('✏️ Modification en cours','info');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ============ EDIT DOSSIER ============
+async function editDossier(id){
+  const{data:d,error}=await sb.from('chlencodage_dossiers_patients').select('*').eq('id',id).single();
+  if(error||!d){toast('Erreur: '+(error?.message||'introuvable'),'error');return;}
+  _editingDossierId=id;_currentDossier=null;
+  navigateTo('patients');
+  setTimeout(()=>{
+    const set=(i,v)=>{const e=document.getElementById(i);if(e&&v!=null)e.value=v;};
+    set('dNom',d.nom);set('dPrenom',d.prenom);set('dDob',d.date_naissance);set('dTel',d.telephone);set('dGs',d.groupe_sanguin);set('dSf',d.situation_familiale);
+    const ca=document.getElementById('contentArea');const h=ca.querySelector('h2');if(h)h.textContent='✏️ Modifier le Dossier';
+    const btn=ca.querySelector('button.btn-primary');if(btn){btn.textContent='💾 Enregistrer les modifications';btn.setAttribute('onclick','updateDossier()');}
+    toast('✏️ Modification du dossier','info');
+  },200);
+}
+async function updateDossier(){
+  if(!_editingDossierId)return;
+  const nom=document.getElementById('dNom').value.trim();
+  const prenom=document.getElementById('dPrenom').value.trim();
+  const dob=document.getElementById('dDob').value||null;
+  const tel=document.getElementById('dTel').value.trim()||null;
+  const gs=document.getElementById('dGs').value||null;
+  const sf=document.getElementById('dSf').value||null;
+  if(!nom||!prenom||!dob){toast('Nom, prénom et date de naissance sont requis','error');return;}
+  const{error}=await sb.from('chlencodage_dossiers_patients').update({nom,prenom,date_naissance:dob,telephone:tel,groupe_sanguin:gs,situation_familiale:sf}).eq('id',_editingDossierId);
+  if(error){toast('Erreur: '+error.message,'error');return;}
+  toast('✅ Dossier modifié','success');logAction&&logAction('UPDATE_DOSSIER','dossiers',_editingDossierId,{});
+  const id=_editingDossierId;_editingDossierId=null;
+  navigateTo('dossiers');
+  setTimeout(()=>showDossierDetail(id),100);
+}
+
 // VIEW FICHE — rendu enrichi
 let _ficheViewData=null,_ficheViewHasMed=false;
 
@@ -1553,6 +1666,7 @@ function renderDossiersList(items){
     +'<div style="flex:1;min-width:200px;"><strong style="color:var(--navy);font-size:1.05em;">'+s(d.nom||'?')+' '+s(d.prenom||'')+'</strong>'
     +'<div style="font-size:.78em;color:var(--text3);margin-top:2px;">'+(d.date_naissance?'né(e) le '+fmtDate(d.date_naissance):'—')+(d.groupe_sanguin?' · 🩸 '+s(d.groupe_sanguin):'')+(d.telephone?' · 📞 '+s(d.telephone):'')+'</div></div>'
     +'<span style="font-size:.78em;background:var(--navy);color:#fff;padding:4px 10px;border-radius:10px;">'+d.fichesCount+' fiche(s)</span>'
+    +'<button class="btn btn-sm" style="background:var(--warning);color:#fff;" onclick="event.stopPropagation();editDossier(\''+d.id+'\')">✏️ Modifier</button>'
     +'<button class="btn btn-sm btn-cyan" onclick="showDossierDetail(\''+d.id+'\')">📂 Ouvrir</button>'
     +'</div>').join('')+'</div>';
 }
