@@ -348,7 +348,7 @@ input[type="checkbox"],input[type="radio"]{width:17px;height:17px;accent-color:v
     <div style="font-size:3em;margin-bottom:16px;">⏱️</div>
     <h2 style="color:#fff;font-size:1.15em;font-weight:700;margin-bottom:10px;">Session inactive</h2>
     <p style="color:rgba(255,255,255,.5);font-size:.88em;margin-bottom:20px;line-height:1.6;">Déconnexion automatique dans :</p>
-    <div class="inact-countdown" id="inactCountdown">0:30</div>
+    <div class="inact-countdown" id="inactCountdown">0:60</div>
     <div><button class="btn-stay" onclick="resetInactivity()">✋ Je suis là</button><button class="btn-logout-now" onclick="doLogout()">Déconnecter</button></div>
   </div>
 </div>
@@ -457,7 +457,7 @@ input[type="checkbox"],input[type="radio"]{width:17px;height:17px;accent-color:v
         <button class="topbar-btn" onclick="doLogout()">🚪 Déconnexion</button>
       </div>
     </div>
-    <div class="inactivity-statusbar"><span>⏱️ Déconnexion auto après 30 min d'inactivité</span><span class="inact-val" id="inactDisplay">30:00</span></div>
+    <div class="inactivity-statusbar"><span>⏱️ Déconnexion auto après 60 min d'inactivité</span><span class="inact-val" id="inactDisplay">60:00</span></div>
     <div class="fiche-indicator" id="ficheIndicator">🔵 Fiche médicale en cours
       <button class="btn-back-main" onclick="switchToMainPatientForm()">↩ Retour à la fiche principale</button>
     </div>
@@ -471,7 +471,7 @@ const sb=supabase.createClient(SB_URL,SB_ANON);
 let _user=null,_profile=null,_appReady=false;
 let _sessionTimer=null,_sessionWarnTimer=null;
 let _inactTimer=null,_inactWarnTimer=null,_inactBarInterval=null,_inactWarnInterval=null,_inactOverlayShown=false,_inactStart=null;
-const INACT_MS=30*60*1000,INACT_WARN_MS=30*1000,SESS_MS=60*60*1000,SESS_WARN_MS=5*60*1000;
+const INACT_MS=60*60*1000,INACT_WARN_MS=60*1000,SESS_MS=60*60*1000,SESS_WARN_MS=5*60*1000;
 let _ficheId=null,_medSaved=false,_ficheViewId=null;
 let _bodyData={},_bodyDataMed={},_activeLesion='Fracture',_activeLesionMed='Fracture';
 let _ynValues={},_evoColCount=0,_matValues={},_bilanBuilt=false,_matBuilt=false,_soignantCount=0;
